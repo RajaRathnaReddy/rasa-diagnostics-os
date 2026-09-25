@@ -6,15 +6,15 @@ import {
   AlertCircle, User, Activity, ExternalLink, Sparkles,
   Mail, X, CheckCircle2, KeyRound
 } from 'lucide-react';
-import { useAuthStore, INITIAL_MANAGED_USERS, type ManagedUser } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { cn } from '../../lib/cn';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { validateAndLogin, loginAsUser, isAuthenticated, sendPasswordReset } = useAuthStore();
+  const { validateAndLogin, isAuthenticated, sendPasswordReset } = useAuthStore();
 
-  const [username, setUsername] = useState('a.rajarathnareddychenni@gmail.com');
-  const [password, setPassword] = useState('Raja@970450');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +29,7 @@ export function LoginPage() {
     setErrorMessage('');
 
     if (!username.trim() || !password.trim()) {
-      setErrorMessage('Please enter both Diagnostic User ID / Email and Security Passcode.');
+      setErrorMessage('Please enter both Staff Email / Mobile and Password.');
       return;
     }
 
@@ -46,13 +46,6 @@ export function LoginPage() {
       setErrorMessage(err?.message || 'Authentication error.');
       setIsSubmitting(false);
     }
-  };
-
-  const handleQuickLogin = (u: ManagedUser) => {
-    setUsername(u.email);
-    setPassword(u.passcode);
-    loginAsUser(u);
-    navigate('/');
   };
 
   const handleResetSubmit = async (e: React.FormEvent) => {
@@ -121,7 +114,7 @@ export function LoginPage() {
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Staff Authentication</h2>
             <p className="text-xs text-slate-400">
-              Sign in with your diagnostic center credentials or select a role persona below
+              Sign in with your diagnostic center credentials to access the operating system
             </p>
           </div>
 
@@ -141,7 +134,7 @@ export function LoginPage() {
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="name@rasadiagnostics.com"
+                placeholder="Enter email or mobile number"
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
               />
             </div>
@@ -166,7 +159,7 @@ export function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter password"
                   className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 pr-10 font-mono"
                 />
                 <button
@@ -188,28 +181,6 @@ export function LoginPage() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-
-          {/* Quick Demo Persona Switcher */}
-          <div className="pt-2 border-t border-slate-800/80 space-y-2.5">
-            <p className="text-[10.5px] uppercase font-bold tracking-wider text-slate-400 text-center">
-              Instant 1-Click Role Switcher
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {INITIAL_MANAGED_USERS.slice(0, 8).map(u => (
-                <button
-                  key={u.id}
-                  onClick={() => handleQuickLogin(u)}
-                  className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 text-left transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-bold text-white truncate">{u.name}</p>
-                    {u.isOwner && <span className="text-[8.5px] px-1 bg-amber-500/20 text-amber-300 rounded font-mono font-bold">Owner</span>}
-                  </div>
-                  <p className="text-[9.5px] text-brand-400 capitalize truncate mt-0.5">{u.role.replace('_', ' ')}</p>
-                </button>
-              ))}
-            </div>
-          </div>
         </motion.div>
       </main>
 
