@@ -7,7 +7,7 @@ import {
   ArrowLeft, Edit, MoreHorizontal, Activity, CheckCircle2,
   AlertTriangle, ChevronRight, Shield, Eye, Stethoscope, Microscope,
   Home, MessageSquare, Paperclip, History, Plus, Printer, Check,
-  Download, ExternalLink, ArrowDown
+  Download, ExternalLink, ArrowDown, Sparkles
 } from 'lucide-react';
 import { cn } from '../lib/cn';
 
@@ -28,7 +28,7 @@ type TabId =
 
 export default function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data, openDicomViewer, openQuickView, setQuickCreateOpen } = useAppStore();
+  const { data, openDicomViewer, openQuickView, setQuickCreateOpen, openReportModal, setReportGeneratorOpen } = useAppStore();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const patient = data.patients.find(p => p.id === id);
@@ -544,22 +544,57 @@ export default function PatientDetailPage() {
         {/* TAB 8: REPORTS */}
         {activeTab === 'reports' && (
           <div className="space-y-3">
-            <h3 className="font-bold text-sm text-surface-900">Signed Clinical Reports & PDF Dispatch</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm text-surface-900">Signed Clinical Reports & PDF Dispatch</h3>
+              <button
+                onClick={() => setReportGeneratorOpen(true)}
+                className="px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>+ Generate Report</span>
+              </button>
+            </div>
             {patientReports.map(rep => (
-              <div key={rep.id} className="p-3 bg-surface-50 border border-surface-200 rounded-xl flex items-center justify-between text-xs">
+              <div key={rep.id} className="p-3.5 bg-surface-50 border border-surface-200 rounded-xl flex items-center justify-between text-xs hover:border-brand-300 transition-all">
                 <div>
                   <div className="font-bold text-surface-900 text-[13px]">{rep.testNames?.join(', ') || 'Diagnostic Report'}</div>
-                  <div className="text-surface-500 font-mono mt-0.5">{rep.reportId} • Signed: {rep.verifiedBy || 'Dr. Padma Rao'}</div>
+                  <div className="text-surface-500 font-mono mt-0.5">{rep.reportId} • Signed: {rep.verifiedBy || 'Dr. Sunita Rao, MD'}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded font-semibold">{rep.status}</span>
-                  <button className="flex items-center gap-1 px-3 py-1.5 border border-surface-200 text-surface-700 rounded-lg hover:bg-surface-100 font-medium">
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded font-semibold border border-emerald-200 text-[11px]">{rep.status}</span>
+                  <button
+                    onClick={() => openReportModal(rep, false)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 border border-surface-200 text-brand-700 bg-white hover:bg-brand-50 rounded-lg font-bold transition-colors cursor-pointer"
+                    title="View Official Report"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View</span>
+                  </button>
+                  <button
+                    onClick={() => openReportModal(rep, true)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-brand-600 text-white hover:bg-brand-700 rounded-lg font-bold transition-colors cursor-pointer shadow-xs"
+                    title="Print / Save PDF"
+                  >
                     <Download className="w-3.5 h-3.5" />
                     <span>PDF</span>
                   </button>
                 </div>
               </div>
             ))}
+            {patientReports.length === 0 && (
+              <div className="p-8 text-center bg-surface-50 rounded-xl border border-surface-200 space-y-2">
+                <FileText className="w-8 h-8 text-surface-400 mx-auto" />
+                <p className="font-bold text-surface-800 text-sm">No reports generated for this patient yet</p>
+                <p className="text-xs text-surface-500">Generate a custom lab or imaging report with one click.</p>
+                <button
+                  onClick={() => setReportGeneratorOpen(true)}
+                  className="px-3.5 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700 inline-flex items-center gap-1.5 cursor-pointer mt-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Generate Report Now</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

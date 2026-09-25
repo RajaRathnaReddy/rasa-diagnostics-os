@@ -358,3 +358,37 @@
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
+
+/* ============================================================
+   Official Medical Report Print Stylesheet
+   ============================================================ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-medical-report,
+  #printable-medical-report * {
+    visibility: visible;
+  }
+  #printable-medical-report {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 12mm 15mm;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 99999;
+  }
+  .no-print {
+    display: none !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+}

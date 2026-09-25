@@ -45,6 +45,21 @@ interface AppState {
   dashboardRole: 'all' | 'receptionist' | 'lab_supervisor' | 'pathologist' | 'radiologist' | 'home_collection' | 'management';
   setDashboardRole: (role: 'all' | 'receptionist' | 'lab_supervisor' | 'pathologist' | 'radiologist' | 'home_collection' | 'management') => void;
 
+  // ── Clinical Report Modal & PDF Viewer ──
+  reportModal: {
+    open: boolean;
+    report: any | null;
+    autoPrint: boolean;
+  };
+  openReportModal: (report: any, autoPrint?: boolean) => void;
+  closeReportModal: () => void;
+
+  // ── Report Generator Modal ──
+  reportGeneratorOpen: boolean;
+  setReportGeneratorOpen: (open: boolean) => void;
+  addReport: (newReport: any) => void;
+  updateReportStatus: (idOrReportId: string, status: 'Generated' | 'Verified' | 'Sent' | 'Delivered' | 'Viewed') => void;
+
   // ── Data ──
   data: DemoData;
   markNotificationRead: (id: string) => void;
@@ -100,6 +115,39 @@ export const useAppStore = create<AppState>((set, get) => {
     // Role Dashboard Switcher
     dashboardRole: 'all',
     setDashboardRole: (role) => set({ dashboardRole: role }),
+
+    // Clinical Report Modal & PDF Viewer
+    reportModal: {
+      open: false,
+      report: null,
+      autoPrint: false,
+    },
+    openReportModal: (report, autoPrint = false) => set({
+      reportModal: { open: true, report, autoPrint }
+    }),
+    closeReportModal: () => set(s => ({
+      reportModal: { ...s.reportModal, open: false }
+    })),
+
+    // Report Generator Modal
+    reportGeneratorOpen: false,
+    setReportGeneratorOpen: (open) => set({ reportGeneratorOpen: open }),
+    addReport: (newReport) => set(s => ({
+      data: {
+        ...s.data,
+        reports: [newReport, ...s.data.reports],
+      }
+    })),
+    updateReportStatus: (idOrReportId, status) => set(s => ({
+      data: {
+        ...s.data,
+        reports: s.data.reports.map(r =>
+          r.id === idOrReportId || r.reportId === idOrReportId
+            ? { ...r, status, verifiedAt: status === 'Verified' ? new Date().toISOString() : r.verifiedAt }
+            : r
+        )
+      }
+    })),
 
     // Data
     data,

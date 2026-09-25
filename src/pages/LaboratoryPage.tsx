@@ -3,11 +3,12 @@ import { useAppStore } from '../store/useAppStore';
 import { FlaskConical, Search, Filter, AlertTriangle, CheckCircle2, Clock, ArrowUpDown } from 'lucide-react';
 
 export default function LaboratoryPage() {
-  const { data } = useAppStore();
+  const { data, openReportModal } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tab, setTab] = useState<'results' | 'worklist' | 'verification'>('worklist');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const departments = useMemo(() => {
     const depts = new Set(data.labResults.map(r => r.department));
@@ -39,6 +40,12 @@ export default function LaboratoryPage() {
 
   return (
     <div className="fade-in space-y-5">
+      {toastMsg && (
+        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-semibold border border-slate-700 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-surface-900">Laboratory</h1>
@@ -121,10 +128,58 @@ export default function LaboratoryPage() {
                     }`}>{result.status}</span>
                   </td>
                   <td>
-                    <div className="flex gap-1">
-                      {result.status === 'Pending' && <button className="px-2 py-1 text-[11px] font-medium bg-brand-50 text-brand-700 rounded hover:bg-brand-100">Enter Result</button>}
-                      {result.status === 'Entered' && <button className="px-2 py-1 text-[11px] font-medium bg-info-50 text-info-700 rounded hover:bg-info-100">Validate</button>}
-                      {result.status === 'Validated' && <button className="px-2 py-1 text-[11px] font-medium bg-success-50 text-success-700 rounded hover:bg-success-100">Verify</button>}
+                    <div className="flex gap-1.5 items-center">
+                      {result.status === 'Pending' && (
+                        <button
+                          onClick={() => {
+                            result.status = 'Entered';
+                            result.value = result.value || '14.2';
+                            setToastMsg(`✅ Result entered for ${result.testName} (${result.patientName})`);
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-brand-50 text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-100 cursor-pointer shadow-2xs"
+                        >
+                          Enter Result
+                        </button>
+                      )}
+                      {result.status === 'Entered' && (
+                        <button
+                          onClick={() => {
+                            result.status = 'Validated';
+                            setToastMsg(`🔍 Validated result for ${result.testName}`);
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 cursor-pointer shadow-2xs"
+                        >
+                          Validate
+                        </button>
+                      )}
+                      {result.status === 'Validated' && (
+                        <button
+                          onClick={() => {
+                            result.status = 'Verified';
+                            result.verifiedBy = 'Dr. Sunita Rao, MD';
+                            setToastMsg(`🎉 Result verified & signed by Dr. Sunita Rao for ${result.patientName}`);
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 cursor-pointer shadow-2xs"
+                        >
+                          Verify & Sign
+                        </button>
+                      )}
+                      {result.status === 'Verified' && (
+                        <button
+                          onClick={() => openReportModal({
+                            reportId: `RPT-${result.orderId ? result.orderId.replace(/[^0-9]/g, '') : '30001'}`,
+                            orderId: result.orderId,
+                            patientId: result.patientId,
+                            patientName: result.patientName,
+                            testNames: [result.testName],
+                            status: 'Verified',
+                            isCritical: result.isCritical
+                          }, false)}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-brand-600 text-white rounded-lg hover:bg-brand-700 cursor-pointer shadow-xs flex items-center gap-1"
+                        >
+                          <span>View PDF</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

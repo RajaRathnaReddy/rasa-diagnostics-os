@@ -7,11 +7,16 @@ import { QuickCreateModal } from '../ui/QuickCreateModal';
 import { FloatingCopilotWidget } from '../ui/FloatingCopilotWidget';
 import { DicomViewerModal } from '../ui/DicomViewerModal';
 import { QuickViewDrawer } from '../ui/QuickViewDrawer';
+import { ClinicalReportModal } from '../ui/ClinicalReportModal';
+import { ReportGeneratorModal } from '../ui/ReportGeneratorModal';
 import { MobileBottomNav } from './MobileBottomNav';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function AppLayout() {
-  const { sidebarCollapsed, dicomViewerOpen, closeDicomViewer, selectedDicomStudy } = useAppStore();
+  const {
+    sidebarCollapsed, dicomViewerOpen, closeDicomViewer, selectedDicomStudy,
+    reportModal, closeReportModal, reportGeneratorOpen, setReportGeneratorOpen
+  } = useAppStore();
 
   return (
     <div className="min-h-screen bg-surface-50 font-sans pb-16 md:pb-0">
@@ -27,6 +32,16 @@ export default function AppLayout() {
         isOpen={dicomViewerOpen}
         onClose={closeDicomViewer}
         study={selectedDicomStudy}
+      />
+      <ClinicalReportModal
+        isOpen={reportModal.open}
+        onClose={closeReportModal}
+        report={reportModal.report}
+        autoPrint={reportModal.autoPrint}
+      />
+      <ReportGeneratorModal
+        isOpen={reportGeneratorOpen}
+        onClose={() => setReportGeneratorOpen(false)}
       />
       <main
         className={`pt-14 transition-[margin-left] duration-200 ${

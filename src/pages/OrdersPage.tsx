@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import {
   Layers, Search, Filter, Hash, User, Calendar, CheckCircle2,
-  Clock, AlertTriangle, Eye, Printer, Plus, ArrowRight
+  Clock, AlertTriangle, Eye, Printer, Plus, ArrowRight, FileText
 } from 'lucide-react';
 import { cn } from '../lib/cn';
 
 export default function OrdersPage() {
-  const { data, openQuickView, setQuickCreateOpen } = useAppStore();
+  const { data, openQuickView, setQuickCreateOpen, openReportModal } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -216,13 +216,32 @@ export default function OrdersPage() {
                   </td>
 
                   <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => openQuickView('order', order)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-brand-600 hover:bg-brand-50 rounded-lg font-medium cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Inspect</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      {['Completed', 'Verified', 'Reported'].includes(order.status) && (
+                        <button
+                          onClick={() => openReportModal({
+                            reportId: `RPT-${order.orderId ? order.orderId.replace(/[^0-9]/g, '') : '30001'}`,
+                            orderId: order.orderId,
+                            patientId: order.patientId,
+                            patientName: order.patientName,
+                            testNames: order.testNames,
+                            status: 'Verified',
+                          }, false)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                          title="View Official Medical PDF"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>PDF</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openQuickView('order', order)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Inspect</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
