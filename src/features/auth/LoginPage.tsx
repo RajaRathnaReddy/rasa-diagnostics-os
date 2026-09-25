@@ -148,7 +148,7 @@ export function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="font-semibold text-slate-300">Security Passcode</label>
+                <label className="font-semibold text-slate-300">Password</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -158,7 +158,7 @@ export function LoginPage() {
                   }}
                   className="text-[11px] text-brand-400 hover:text-brand-300 font-semibold transition-colors cursor-pointer"
                 >
-                  Forgot Passcode?
+                  Forgot Password?
                 </button>
               </div>
               <div className="relative">
@@ -177,10 +177,6 @@ export function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[10.5px] text-slate-400 mt-1.5 flex items-center justify-between">
-                <span>Default Initial Passkey: <strong className="text-brand-300 font-mono font-bold">RasaTech007</strong></span>
-                <span className="text-[10px] text-slate-400">Master: <strong className="text-amber-300 font-mono">Raja@970450</strong></span>
-              </p>
             </div>
 
             <button
@@ -188,7 +184,7 @@ export function LoginPage() {
               disabled={isSubmitting}
               className="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20 transition-all cursor-pointer"
             >
-              <span>Authenticate Staff Account</span>
+              <span>Login to Account</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
