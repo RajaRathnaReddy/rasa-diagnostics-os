@@ -20,18 +20,21 @@ const DEFAULT_MESSAGES: ChatMessage[] = [
   {
     id: 'm-init',
     sender: 'assistant',
-    text: "👋 **Hello Doctor / Lab Director.** I am your **RASA Diagnostic AI Copilot**, grounded in real-time LIS analyzer nodes, PACS imaging archives, and critical panic value registries.\n\nAsk me about panic lab values requiring immediate doctor tele-notification, sample hemolysis patterns, turnaround time bottlenecks, or IV contrast safety screening.",
+    text: "Good afternoon.\n\nThere are **12 items requiring attention** across center operations:\n\n• **10 Critical Results** — 3 awaiting acknowledgement\n• **8 TAT Risks** — Approaching turnaround limit\n• **5 Rejected Samples** — Phlebotomy recollection needed\n• **4 Delayed Collections** — Home visit routing delays\n\nHow would you like to proceed?",
     time: 'Just now',
-    clinicalBadges: ['LIS Synced', 'PACS Ready', 'NABL ISO 15189 Grounded'],
+    clinicalBadges: ['Operational Assistant', 'LIS & PACS Connected', 'Real-time Feed'],
   },
 ];
 
 const SUGGESTED_PROMPTS = [
-  { label: '🚨 Panic Lab Value Alert Audit', query: 'Show all unacknowledged critical panic lab values across branches today' },
-  { label: '⏱️ TAT Bottleneck Analysis', query: 'Identify departments exceeding standard turnaround times (TAT > 3h)' },
-  { label: '🩸 Sample Hemolysis & Rejection', query: 'Audit sample rejection rates and hemolysis causes at Kukatpally' },
-  { label: '🩻 CT Iodine Contrast Safety Protocol', query: 'What is the eGFR screening cutoff protocol for IV contrast in CT scan?' },
-  { label: '🧪 Reagent FEFO Expiry Warning', query: 'Check reagents nearing expiry or below reorder safety stock levels' },
+  { label: '🚨 Show Critical Results', query: 'Show Critical Results' },
+  { label: '⏱️ Show TAT Risks', query: 'Show TAT Risks' },
+  { label: '🧪 Show Rejected Samples', query: 'Show Rejected Samples' },
+  { label: '🚚 Show Delayed Collections', query: 'Show Delayed Collections' },
+  { label: '📊 How many reports are delayed today?', query: 'How many reports are delayed today?' },
+  { label: '🏥 Which department has the highest TAT?', query: 'Which department has the highest TAT?' },
+  { label: '🩸 How many samples were rejected today?', query: 'How many samples were rejected today?' },
+  { label: '🩻 Show today\'s pending radiology reports', query: 'Show today\'s pending radiology reports' },
 ];
 
 export function FloatingCopilotWidget() {
@@ -80,64 +83,80 @@ export function FloatingCopilotWidget() {
       let replyText = '';
       let badges: string[] = ['RASA Clinical Engine'];
       const lower = query.toLowerCase();
+       if (lower.includes('show critical') || lower.includes('critical results') || lower.includes('panic')) {
+        replyText = `### 🚨 Critical Results Requiring Acknowledgement (10 Total)
+- **PAT-0001 (Rajesh Kumar)**: Serum Potassium **6.8 mEq/L** *(Arrhythmia Risk · STAT)*
+- **PAT-0016 (Kavitha R.)**: High-Sensitivity Troponin-I **1.42 ng/mL** *(Acute Coronary Syndrome)*
+- **PAT-0034 (Venkat Rao)**: Platelet Count **14,000 /µL** *(Critical Bleeding Alert)*
+- **7 Additional critical values** flagged in morning analyzer runs (Bilirubin, Calcium, Lactate).
 
-      if (lower.includes('panic') || lower.includes('critical') || lower.includes('alert')) {
-        replyText = `### 🚨 Urgent Panic Value Tele-Notification Sentinel
-Found **3 critical panic lab results** requiring immediate telephonic call to treating physician:
-- **PAT-0001 (Rajesh Kumar)**: Serum Potassium **6.8 mEq/L** *(Ref: 3.5 - 5.0)* · High Arrhythmia Risk · Specimen re-checked & verified.
-- **PAT-0016 (Kavitha R.)**: High-Sensitivity Troponin-I **1.42 ng/mL** *(Ref: < 0.04)* · Acute Coronary Syndrome indication.
-- **PAT-0034 (Venkat Rao)**: Platelet Count **14,000 /µL** *(Ref: 150,000 - 450,000)* · Critical Bleeding Precaution.
+**Immediate Required Action:**
+Treating doctors must be telephonically contacted and read-back acknowledgment logged in LIS.`;
+        badges = ['10 Criticals', 'STAT Protocol', 'LIS Verified'];
+      } else if (lower.includes('show tat') || lower.includes('tat risks') || lower.includes('delayed today') || lower.includes('how many reports are delayed')) {
+        replyText = `### ⏱️ Turnaround Time (TAT) Risk & Delays Summary
+- **Total reports delayed today**: **8 reports** are currently delayed beyond their guaranteed SLA time.
+- **Top delay drivers**: Histopathology complex biopsies (avg 3.8 hrs) and MRI Brain with Contrast (avg 2.8 hrs).
+- **8 additional reports** are within 45 minutes of breaching their SLA commitment.
 
-**Immediate Protocol Action:**
-1. Direct phone call initiated to referring cardiologist (Dr. K. Murthy).
-2. Telephonic read-back confirmation logged in LIS audit log as per NABL Section 5.8 standards.`;
-        badges = ['Critical Panic', 'Immediate Call', '3 Patients'];
-      } else if (lower.includes('tat') || lower.includes('turnaround') || lower.includes('delay') || lower.includes('bottleneck')) {
-        replyText = `### ⏱️ Operational TAT Diagnostic Intelligence
-Average diagnostic turnaround today is **2.4 hours** (Target: < 3.0 hrs).
-**Departmental Breakdown:**
-- **Hematology (CBC/Coagulation)**: 48 mins *(Optimal)*
-- **Biochemistry (LFT/KFT/Lipid)**: 1 hr 15 mins *(Optimal)*
-- **Microbiology (Cultures)**: 36 hrs *(Within incubation cycle)*
-- **Radiology (MRI / 64-Slice CT)**: 3 hrs 45 mins *(⚠️ Bottleneck at Banjara Hills)*
+**Recommended Action:**
+Expedite pathologist verification queue on Histopathology and allocate tele-radiologist for pending neuro scans.`;
+        badges = ['8 Delayed Reports', 'SLA Alert', 'TAT Watch'];
+      } else if (lower.includes('highest tat') || lower.includes('which department has the highest')) {
+        replyText = `### 🏥 Department Turnaround Time Ranking
+1. **Histopathology & Biopsy**: **3.8 hrs** *(Target: 3.0 hrs)* — ⚠️ Highest TAT
+2. **Radiology (MRI / 64-Slice CT)**: **2.6 hrs** *(Target: 2.5 hrs)*
+3. **Immunology & Hormones**: **2.2 hrs** *(Target: 2.0 hrs)*
+4. **Biochemistry**: **1.8 hrs** *(Target: 2.0 hrs)* — ✅ Within SLA
+5. **Hematology (CBC)**: **45 mins** *(Target: 1.0 hr)* — ✅ Optimal`;
+        badges = ['Pathology Highest', 'TAT Ranking', 'Benchmarked'];
+      } else if (lower.includes('show rejected') || lower.includes('how many samples were rejected') || lower.includes('samples rejected')) {
+        replyText = `### 🧪 Sample Rejections Today (5 Specimens Total)
+- **18 Awaiting Recollection** across yesterday & today's batches.
+- **5 Rejected today**:
+  - 3 samples rejected for **Gross In-vitro Hemolysis** (Lavender EDTA tubes).
+  - 1 sample rejected for **Insufficient Specimen Volume** (Citrate Blue top).
+  - 1 sample rejected for **Severe Lipemia** (Fasting required).
 
-**AI Recommendation:**
-Radiology reporting queue has 14 unverified studies assigned to Dr. Suresh V. Recommend auto-routing 6 routine spine MRI studies to tele-radiology reserve pool.`;
-        badges = ['TAT Analytics', 'Actionable', 'Banjara Hills Node'];
-      } else if (lower.includes('hemolysis') || lower.includes('rejection') || lower.includes('rejection rate') || lower.includes('sample')) {
-        replyText = `### 🩸 Phlebotomy Quality & Hemolysis Root Cause
-Sample rejection rate at **Kukatpally Branch** is currently **8.2%** *(Platform Benchmark: < 1.5%)*.
-- **Primary Rejection Mode**: In-vitro Hemolysis (68%) & Under-filled EDTA microtainers (24%).
-- **Primary Source**: Phlebotomy Station 2 (Vacutainer 21G butterfly draw technique issue).
+**Correction Action:**
+Free patient recollection orders dispatched to phlebotomy team.`;
+        badges = ['5 Rejected Today', '18 In Queue', 'Phlebotomy Flagged'];
+      } else if (lower.includes('show delayed collections') || lower.includes('delayed collections')) {
+        replyText = `### 🚚 Delayed Home Collections (4 Visits)
+- **LB Nagar Route**: Pavan Kumar (Phleb) running 35 minutes behind due to traffic.
+- **Hitec City Route**: Suresh Naidu running 20 minutes behind.
+- **Affected Patients**: S. Ramanathan (Lipid Profile) & Anita Deshmukh (Thyroid Panel).
 
-**Correction Applied:**
-Automatic QC flag created. Phlebotomy refresher training alert dispatched to branch supervisor Suresh Naidu.`;
-        badges = ['Pre-Analytical QC', 'Root Cause Found', 'Kukatpally'];
-      } else if (lower.includes('contrast') || lower.includes('egfr') || lower.includes('ct') || lower.includes('iodine')) {
+**Fleet Correction:**
+Notifications dispatched via SMS to patients with updated arrival window.`;
+        badges = ['4 Delayed Visits', 'Fleet Logistics', 'Live GPS'];
+      } else if (lower.includes('pending radiology') || lower.includes('radiology reports')) {
+        replyText = `### 🩻 Today's Pending Radiology Reporting Queue
+There are **14 pending radiology studies** awaiting radiologist sign-off:
+- **MRI Brain / Spine**: 4 studies (Dr. Anand assigned)
+- **CT Abdomen / Chest (HRCT)**: 5 studies (Dr. Radhika Sharma assigned)
+- **Ultrasound Abdomen & Pelvis**: 5 studies (Completed, draft notes uploaded)
+
+**PACS Accession Status:**
+All DICOM slices loaded in zero-footprint web viewer with AI CADx lesion heatmap pre-processed.`;
+        badges = ['14 Pending Studies', 'PACS Synced', 'AI CADx Ready'];
+      } else if (lower.includes('contrast') || lower.includes('egfr') || lower.includes('iodine')) {
         replyText = `### 🩻 Intravenous Contrast Safety Protocol (ACR / ESUR Guidelines)
 **Pre-CT Contrast Administration Rules:**
-1. **eGFR ≥ 45 mL/min/1.73m²**: Safe to proceed with standard non-ionic low-osmolar iodinated contrast (e.g. Omnipaque / Visipaque).
-2. **eGFR 30 - 44 mL/min/1.73m²**: High-risk for CIN (Contrast-Induced Nephropathy). Hydration protocol with IV Normal Saline required. Radiologist approval mandatory.
-3. **eGFR < 30 mL/min/1.73m² or Anuria**: Absolute contraindication unless emergent life-threatening indication with nephrology standby.
-
-**Metformin Warning:** Discontinue Metformin at time of procedure and withhold 48 hours post-scan until repeat renal function check.`;
+1. **eGFR ≥ 45 mL/min/1.73m²**: Safe to proceed with standard non-ionic low-osmolar iodinated contrast (Omnipaque / Visipaque).
+2. **eGFR 30 - 44 mL/min/1.73m²**: High-risk for Contrast-Induced Nephropathy (CIN). Pre-scan hydration protocol required.
+3. **eGFR < 30 mL/min/1.73m²**: Absolute contraindication unless emergent life-threatening indication.`;
         badges = ['Radiology Safety', 'eGFR Protocol', 'ACR Guidelines'];
-      } else if (lower.includes('reagent') || lower.includes('stock') || lower.includes('inventory') || lower.includes('expiry')) {
-        replyText = `### 🧪 Reagent Depletion & FEFO Expiry Sentinel
-- **HbA1c Bio-Rad HPLC Reagent Kit**: 12 tests remaining *(Forecast depletion: Today 4:30 PM)* · Auto-PO #PO-9912 dispatched to vendor.
-- **Serum Electrolytes Calibrator Lot #401**: Expires in 5 days *(30 Sep 2026)* · New lot arrived and pending QC calibration curve run.
-- **Vacutainer K2 EDTA Lavender Tubes (4ml)**: 1,200 units in central stock *(Adequate for 18 days)*.`;
-        badges = ['FEFO Active', 'Auto-PO Triggered', 'Reagent QC'];
       } else {
-        replyText = `### 💡 Diagnostic Intelligence Analysis
-Analyzing your inquiry: **"${query}"** against current active diagnostic operating metrics.
+        replyText = `### 💡 Diagnostic Intelligence Operational Synthesis
+Analyzing inquiry: **"${query}"** against current diagnostic center operations.
 
-- **Current Operating Branch**: Banjara Hills Central Diagnostic Complex
-- **Active Specimen Worklist**: 42 specimens in analyzer queues, 12 pending clinical verification
-- **Patient Safety Sentinels**: Zero unflagged critical panic values at this moment.
+- **Current Center Status**: 42 specimens active in analyzer pipelines, 12 pending verification.
+- **Panic Value Sentinels**: 3 unflagged critical results in queue.
+- **Recommendation**: Review Immediate Action Queue on Command Center.
 
 *Note: All AI-assisted suggestions are advisory and must be verified by a board-certified Pathologist or Radiologist.*`;
-        badges = ['BioMistral Verified', 'Diagnostic Advisory'];
+        badges = ['Operational Search', 'Live Center Node'];
       }
 
       setMessages(prev => [

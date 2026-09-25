@@ -4,20 +4,22 @@ import { useAppStore } from '../../store/useAppStore';
 import {
   Search, Users, CalendarDays, ClipboardList, Receipt, TestTubes,
   FlaskConical, Scan, FileText, Stethoscope, Home, Package,
-  BarChart3, Settings, LayoutDashboard, ArrowRight, User, Hash
+  BarChart3, Settings, LayoutDashboard, ArrowRight, User, Hash,
+  Tag, Clock, AlertTriangle, Layers, Building2, Check
 } from 'lucide-react';
+import { cn } from '../../lib/cn';
 
 interface CommandItem {
   id: string;
   label: string;
-  description?: string;
+  sublabel?: string;
+  category: 'Patients' | 'Orders' | 'Reports' | 'Doctors' | 'Tests' | 'Appointments' | 'Invoices' | 'Pages';
   icon: React.ElementType;
-  category: string;
   action: () => void;
 }
 
 export default function CommandPalette() {
-  const { commandPaletteOpen, setCommandPaletteOpen, data } = useAppStore();
+  const { commandPaletteOpen, setCommandPaletteOpen, data, openQuickView } = useAppStore();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,54 +32,134 @@ export default function CommandPalette() {
   };
 
   const allItems = useMemo<CommandItem[]>(() => {
+    // 1. Pages
     const pages: CommandItem[] = [
-      { id: 'nav-dashboard', label: 'Dashboard', description: 'Command Center', icon: LayoutDashboard, category: 'Pages', action: () => go('/') },
-      { id: 'nav-patients', label: 'Patients', description: 'Patient Management', icon: Users, category: 'Pages', action: () => go('/patients') },
-      { id: 'nav-appointments', label: 'Appointments', description: 'Scheduling', icon: CalendarDays, category: 'Pages', action: () => go('/appointments') },
-      { id: 'nav-registration', label: 'Registration', description: 'Patient Registration', icon: ClipboardList, category: 'Pages', action: () => go('/registration') },
-      { id: 'nav-billing', label: 'Billing', description: 'Billing & Payments', icon: Receipt, category: 'Pages', action: () => go('/billing') },
-      { id: 'nav-samples', label: 'Sample Collection', description: 'Sample Management', icon: TestTubes, category: 'Pages', action: () => go('/samples') },
-      { id: 'nav-lab', label: 'Laboratory', description: 'Lab Operations', icon: FlaskConical, category: 'Pages', action: () => go('/laboratory') },
-      { id: 'nav-radiology', label: 'Radiology', description: 'Imaging Studies', icon: Scan, category: 'Pages', action: () => go('/radiology') },
-      { id: 'nav-reports', label: 'Reports', description: 'Report Management', icon: FileText, category: 'Pages', action: () => go('/reports') },
-      { id: 'nav-doctors', label: 'Doctors / Referrers', description: 'Doctor Management', icon: Stethoscope, category: 'Pages', action: () => go('/doctors') },
-      { id: 'nav-home', label: 'Home Collection', description: 'Home Sample Collection', icon: Home, category: 'Pages', action: () => go('/home-collection') },
-      { id: 'nav-inventory', label: 'Inventory', description: 'Stock Management', icon: Package, category: 'Pages', action: () => go('/inventory') },
-      { id: 'nav-analytics', label: 'Analytics', description: 'Business Intelligence', icon: BarChart3, category: 'Pages', action: () => go('/analytics') },
-      { id: 'nav-settings', label: 'Settings', description: 'System Configuration', icon: Settings, category: 'Pages', action: () => go('/settings') },
+      { id: 'page-dashboard', label: 'Command Center', sublabel: 'Operational overview & KPIs', category: 'Pages', icon: LayoutDashboard, action: () => go('/') },
+      { id: 'page-reception', label: 'Reception & Tokens', sublabel: 'Live patient walk-in desk', category: 'Pages', icon: Clock, action: () => go('/reception') },
+      { id: 'page-consultations', label: 'Doctor Consultations', sublabel: 'Consultation & contrast safety screening', category: 'Pages', icon: Stethoscope, action: () => go('/consultations') },
+      { id: 'page-patients', label: 'Patients Master', sublabel: 'Patient directory & 360 view', category: 'Pages', icon: Users, action: () => go('/patients') },
+      { id: 'page-orders', label: 'Diagnostic Orders', sublabel: 'Accessioning & order queue', category: 'Pages', icon: Layers, action: () => go('/orders') },
+      { id: 'page-samples', label: 'Sample Collection', sublabel: 'Phlebotomy & tube barcoding', category: 'Pages', icon: TestTubes, action: () => go('/samples') },
+      { id: 'page-lab', label: 'Laboratory (LIS)', sublabel: 'Analyzers, delta-checks, QC', category: 'Pages', icon: FlaskConical, action: () => go('/laboratory') },
+      { id: 'page-radiology', label: 'Radiology (RIS/PACS)', sublabel: 'DICOM Viewer, MRI, CT, USG', category: 'Pages', icon: Scan, action: () => go('/radiology') },
+      { id: 'page-reports', label: 'Reports Hub', sublabel: 'Verification & dispatch', category: 'Pages', icon: FileText, action: () => go('/reports') },
+      { id: 'page-billing', label: 'Billing & Cashier', sublabel: 'Invoices, insurance, receipts', category: 'Pages', icon: Receipt, action: () => go('/billing') },
+      { id: 'page-inventory', label: 'Inventory & Consumables', sublabel: 'Tubes, reagents, PPE', category: 'Pages', icon: Package, action: () => go('/inventory') },
+      { id: 'page-analytics', label: 'Analytics & TAT', sublabel: 'SLA compliance & revenue', category: 'Pages', icon: BarChart3, action: () => go('/analytics') },
     ];
 
-    const patientItems: CommandItem[] = data.patients.slice(0, 20).map(p => ({
-      id: `patient-${p.id}`,
+    // 2. Patients
+    const patients: CommandItem[] = data.patients.map(p => ({
+      id: `pat-${p.id}`,
       label: p.fullName,
-      description: `${p.patientId} • ${p.phone}`,
-      icon: User,
+      sublabel: `${p.patientId} • Phone: ${p.phone} • ${p.age}y/${p.gender}`,
       category: 'Patients',
-      action: () => go(`/patients/${p.id}`),
+      icon: User,
+      action: () => {
+        setCommandPaletteOpen(false);
+        openQuickView('patient', p);
+      },
     }));
 
-    const orderItems: CommandItem[] = data.orders.slice(0, 10).map(o => ({
-      id: `order-${o.id}`,
-      label: o.orderId,
-      description: `${o.patientName} • ${o.status}`,
-      icon: Hash,
+    // 3. Orders
+    const orders: CommandItem[] = data.orders.map(o => ({
+      id: `ord-${o.id}`,
+      label: `${o.orderId} — ${o.patientName}`,
+      sublabel: `${o.testNames.join(', ')} • Priority: ${o.priority}`,
       category: 'Orders',
-      action: () => go(`/orders/${o.id}`),
+      icon: Hash,
+      action: () => {
+        setCommandPaletteOpen(false);
+        openQuickView('order', o);
+      },
     }));
 
-    return [...pages, ...patientItems, ...orderItems];
-  }, [data]);
+    // 4. Reports
+    const reports: CommandItem[] = data.reports.map(r => ({
+      id: `rep-${r.id}`,
+      label: `${r.reportId} • ${r.testNames?.join(', ') || r.patientName}`,
+      sublabel: `Status: ${r.status} • Verified by: ${r.verifiedBy || 'Pending'}`,
+      category: 'Reports',
+      icon: FileText,
+      action: () => {
+        setCommandPaletteOpen(false);
+        openQuickView('report', r);
+      },
+    }));
 
+    // 5. Doctors
+    const doctors: CommandItem[] = data.doctors.map(d => ({
+      id: `doc-${d.id}`,
+      label: d.fullName,
+      sublabel: `${d.specialization} • ${d.hospital} • Reg: ${d.registrationNumber}`,
+      category: 'Doctors',
+      icon: Stethoscope,
+      action: () => go('/doctors'),
+    }));
+
+    // 6. Test Catalog
+    const tests: CommandItem[] = data.testCatalog.map(t => ({
+      id: `tst-${t.id}`,
+      label: `${t.name} (${t.testCode})`,
+      sublabel: `${t.department} • ₹${t.price} • Sample: ${t.sampleType} • TAT: ${t.tatHours}h`,
+      category: 'Tests',
+      icon: Tag,
+      action: () => go('/laboratory'),
+    }));
+
+    // 7. Appointments
+    const appointments: CommandItem[] = data.appointments.map(a => ({
+      id: `apt-${a.id}`,
+      label: `${a.patientName} • ${a.appointmentId}`,
+      sublabel: `${a.date} at ${a.time} • ${a.type} • Dr. ${a.doctorName || 'Assigned'}`,
+      category: 'Appointments',
+      icon: CalendarDays,
+      action: () => {
+        setCommandPaletteOpen(false);
+        openQuickView('appointment', a);
+      },
+    }));
+
+    // 8. Invoices
+    const invoices: CommandItem[] = data.invoices.map(inv => ({
+      id: `inv-${inv.id}`,
+      label: `${inv.invoiceId} • ${inv.patientName}`,
+      sublabel: `Total: ₹${inv.total} • Paid: ₹${inv.paid} • Status: ${inv.status}`,
+      category: 'Invoices',
+      icon: Receipt,
+      action: () => go('/billing'),
+    }));
+
+    return [...pages, ...patients, ...orders, ...reports, ...doctors, ...tests, ...appointments, ...invoices];
+  }, [data, openQuickView]);
+
+  // Filtered by query
   const filtered = useMemo(() => {
-    if (!query) return allItems.slice(0, 15);
+    if (!query.trim()) {
+      // Default recommended commands when query is empty
+      return allItems.slice(0, 18);
+    }
     const q = query.toLowerCase();
-    return allItems.filter(
-      item => item.label.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
+    return allItems
+      .filter(item =>
+        item.label.toLowerCase().includes(q) ||
+        (item.sublabel && item.sublabel.toLowerCase().includes(q)) ||
         item.category.toLowerCase().includes(q)
-    ).slice(0, 15);
+      )
+      .slice(0, 30);
   }, [query, allItems]);
 
+  // Grouped results by category
+  const groupedResults = useMemo(() => {
+    const groups: Record<string, CommandItem[]> = {};
+    filtered.forEach(item => {
+      if (!groups[item.category]) groups[item.category] = [];
+      groups[item.category].push(item);
+    });
+    return groups;
+  }, [filtered]);
+
+  // Auto-focus input on open
   useEffect(() => {
     if (commandPaletteOpen) {
       setQuery('');
@@ -90,6 +172,7 @@ export default function CommandPalette() {
     setSelectedIndex(0);
   }, [query]);
 
+  // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -98,6 +181,7 @@ export default function CommandPalette() {
       e.preventDefault();
       setSelectedIndex(i => Math.max(i - 1, 0));
     } else if (e.key === 'Enter' && filtered[selectedIndex]) {
+      e.preventDefault();
       filtered[selectedIndex].action();
     } else if (e.key === 'Escape') {
       setCommandPaletteOpen(false);
@@ -106,78 +190,114 @@ export default function CommandPalette() {
 
   if (!commandPaletteOpen) return null;
 
-  const grouped = filtered.reduce<Record<string, CommandItem[]>>((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {});
-
-  let flatIndex = -1;
+  let flatIndexCounter = 0;
 
   return (
-    <div className="command-overlay" onClick={() => setCommandPaletteOpen(false)}>
+    <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 md:p-20">
+      {/* Backdrop */}
       <div
-        className="w-full max-w-lg bg-surface-0 rounded-xl shadow-command border border-surface-200 overflow-hidden fade-in"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Search Input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-surface-200">
-          <Search className="w-5 h-5 text-surface-400 flex-shrink-0" />
+        className="fixed inset-0 bg-surface-950/50 backdrop-blur-xs transition-opacity"
+        onClick={() => setCommandPaletteOpen(false)}
+      />
+
+      <div className="relative mx-auto max-w-2xl bg-surface-0 rounded-2xl shadow-command border border-surface-200 overflow-hidden transform transition-all">
+        {/* Search Input Bar */}
+        <div className="flex items-center px-4 border-b border-surface-200">
+          <Search className="w-5 h-5 text-brand-600 shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search patients, orders, pages..."
+            placeholder="Search patients, ID, phone, orders, tests, reports, doctors..."
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-sm text-surface-900 placeholder:text-surface-400 outline-none"
+            className="w-full h-13 px-3 bg-transparent text-sm text-surface-900 placeholder-surface-400 focus:outline-none"
           />
-          <kbd className="text-[11px] text-surface-400 bg-surface-100 px-1.5 py-0.5 rounded border border-surface-200">ESC</kbd>
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="text-xs text-surface-400 hover:text-surface-600 px-2 py-1"
+            >
+              Clear
+            </button>
+          )}
+          <span className="text-[10px] font-bold text-surface-400 bg-surface-100 px-1.5 py-0.5 rounded border border-surface-200 shrink-0">
+            ESC
+          </span>
         </div>
 
-        {/* Results */}
-        <div className="max-h-80 overflow-y-auto py-2">
-          {filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <p className="text-sm text-surface-500">No results found for "{query}"</p>
-            </div>
-          ) : (
-            Object.entries(grouped).map(([category, items]) => (
-              <div key={category}>
-                <div className="px-4 py-1.5 text-[11px] font-medium text-surface-500 uppercase tracking-wider">{category}</div>
-                {items.map(item => {
-                  flatIndex++;
-                  const Icon = item.icon;
-                  const isSelected = flatIndex === selectedIndex;
-                  const currentIndex = flatIndex;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => item.action()}
-                      onMouseEnter={() => setSelectedIndex(currentIndex)}
-                      className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                        isSelected ? 'bg-brand-50 text-brand-700' : 'text-surface-700 hover:bg-surface-50'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-brand-500' : 'text-surface-400'}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium truncate">{item.label}</p>
-                        {item.description && <p className="text-[11px] text-surface-500 truncate">{item.description}</p>}
+        {/* Grouped Search Results List */}
+        <div className="max-h-[440px] overflow-y-auto p-2 no-scrollbar">
+          {filtered.length > 0 ? (
+            Object.entries(groupedResults).map(([category, items]) => (
+              <div key={category} className="mb-2 last:mb-0">
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-surface-400">
+                  {category} ({items.length})
+                </div>
+
+                <div className="space-y-0.5">
+                  {items.map((item) => {
+                    const currentIndex = flatIndexCounter++;
+                    const isSelected = currentIndex === selectedIndex;
+                    const Icon = item.icon;
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={item.action}
+                        onMouseEnter={() => setSelectedIndex(currentIndex)}
+                        className={cn(
+                          'flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer',
+                          isSelected
+                            ? 'bg-brand-50 text-brand-900 font-semibold'
+                            : 'text-surface-700 hover:bg-surface-50'
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={cn(
+                            'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
+                            isSelected ? 'bg-brand-600 text-white' : 'bg-surface-100 text-surface-500'
+                          )}>
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-[13px] font-semibold text-surface-900">
+                              {item.label}
+                            </div>
+                            {item.sublabel && (
+                              <div className="text-[11px] text-surface-500 truncate">
+                                {item.sublabel}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          <span className="text-[10px] text-surface-400 bg-surface-100 px-1.5 py-0.2 rounded capitalize">
+                            {item.category}
+                          </span>
+                          {isSelected && <ArrowRight className="w-3.5 h-3.5 text-brand-600" />}
+                        </div>
                       </div>
-                      {isSelected && <ArrowRight className="w-3.5 h-3.5 text-brand-400" />}
-                    </button>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             ))
+          ) : (
+            <div className="py-12 text-center text-xs text-surface-500">
+              No matching diagnostic records found for <span className="font-semibold text-surface-800">"{query}"</span>.
+            </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t border-surface-200 text-[11px] text-surface-400">
-          <span>↑↓ Navigate</span>
-          <span>↵ Open</span>
-          <span>ESC Close</span>
+        {/* Footer Keyboard Hints */}
+        <div className="px-4 py-2 bg-surface-50 border-t border-surface-200 flex items-center justify-between text-[11px] text-surface-400">
+          <div className="flex items-center gap-3">
+            <span>Use <kbd className="font-mono bg-surface-200 px-1 rounded text-surface-700">↑</kbd> <kbd className="font-mono bg-surface-200 px-1 rounded text-surface-700">↓</kbd> to navigate</span>
+            <span><kbd className="font-mono bg-surface-200 px-1 rounded text-surface-700">Enter</kbd> to select</span>
+          </div>
+          <span>Showing {filtered.length} indexed records</span>
         </div>
       </div>
     </div>

@@ -6,18 +6,22 @@ import { NotificationPanel } from '../ui/NotificationPanel';
 import { QuickCreateModal } from '../ui/QuickCreateModal';
 import { FloatingCopilotWidget } from '../ui/FloatingCopilotWidget';
 import { DicomViewerModal } from '../ui/DicomViewerModal';
+import { QuickViewDrawer } from '../ui/QuickViewDrawer';
+import { MobileBottomNav } from './MobileBottomNav';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function AppLayout() {
   const { sidebarCollapsed, dicomViewerOpen, closeDicomViewer, selectedDicomStudy } = useAppStore();
 
   return (
-    <div className="min-h-screen bg-surface-50 font-sans">
+    <div className="min-h-screen bg-surface-50 font-sans pb-16 md:pb-0">
       <Sidebar />
       <TopNav />
       <CommandPalette />
       <NotificationPanel />
       <QuickCreateModal />
+      <QuickViewDrawer />
+      <MobileBottomNav />
       <FloatingCopilotWidget />
       <DicomViewerModal
         isOpen={dicomViewerOpen}

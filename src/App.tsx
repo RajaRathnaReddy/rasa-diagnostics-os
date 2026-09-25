@@ -14,6 +14,7 @@ const PatientsPage = lazy(() => import('./pages/PatientsPage'));
 const PatientDetailPage = lazy(() => import('./pages/PatientDetailPage'));
 const AppointmentsPage = lazy(() => import('./pages/AppointmentsPage'));
 const RegistrationPage = lazy(() => import('./pages/RegistrationPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const BillingPage = lazy(() => import('./pages/BillingPage'));
 const SamplesPage = lazy(() => import('./pages/SamplesPage'));
 const LaboratoryPage = lazy(() => import('./pages/LaboratoryPage'));
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/patients/:id" element={<Suspense fallback={<PageLoader />}><PatientDetailPage /></Suspense>} />
         <Route path="/appointments" element={<Suspense fallback={<PageLoader />}><AppointmentsPage /></Suspense>} />
         <Route path="/registration" element={<Suspense fallback={<PageLoader />}><RegistrationPage /></Suspense>} />
+        <Route path="/orders" element={<Suspense fallback={<PageLoader />}><OrdersPage /></Suspense>} />
         <Route path="/billing" element={<Suspense fallback={<PageLoader />}><BillingPage /></Suspense>} />
         <Route path="/samples" element={<Suspense fallback={<PageLoader />}><SamplesPage /></Suspense>} />
         <Route path="/laboratory" element={<Suspense fallback={<PageLoader />}><LaboratoryPage /></Suspense>} />

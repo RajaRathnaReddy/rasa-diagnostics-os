@@ -32,6 +32,19 @@ interface AppState {
   openDicomViewer: (studyOrId?: any) => void;
   closeDicomViewer: () => void;
 
+  // ── Quick View Drawer ──
+  quickViewDrawer: {
+    open: boolean;
+    type: 'patient' | 'order' | 'sample' | 'report' | 'appointment' | 'invoice' | 'action_item' | null;
+    data: any;
+  };
+  openQuickView: (type: 'patient' | 'order' | 'sample' | 'report' | 'appointment' | 'invoice' | 'action_item', data: any) => void;
+  closeQuickView: () => void;
+
+  // ── Role Dashboard Switcher ──
+  dashboardRole: 'all' | 'receptionist' | 'lab_supervisor' | 'pathologist' | 'radiologist' | 'home_collection' | 'management';
+  setDashboardRole: (role: 'all' | 'receptionist' | 'lab_supervisor' | 'pathologist' | 'radiologist' | 'home_collection' | 'management') => void;
+
   // ── Data ──
   data: DemoData;
   markNotificationRead: (id: string) => void;
@@ -70,6 +83,23 @@ export const useAppStore = create<AppState>((set, get) => {
     selectedDicomStudy: null,
     openDicomViewer: (studyOrId) => set({ dicomViewerOpen: true, selectedDicomStudy: studyOrId }),
     closeDicomViewer: () => set({ dicomViewerOpen: false, selectedDicomStudy: null }),
+
+    // Quick View Drawer
+    quickViewDrawer: {
+      open: false,
+      type: null,
+      data: null,
+    },
+    openQuickView: (type, data) => set({
+      quickViewDrawer: { open: true, type, data }
+    }),
+    closeQuickView: () => set(s => ({
+      quickViewDrawer: { ...s.quickViewDrawer, open: false }
+    })),
+
+    // Role Dashboard Switcher
+    dashboardRole: 'all',
+    setDashboardRole: (role) => set({ dashboardRole: role }),
 
     // Data
     data,
