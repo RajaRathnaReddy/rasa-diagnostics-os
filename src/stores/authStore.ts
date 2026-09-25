@@ -65,6 +65,29 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     },
   },
   {
+    id: 'user-demo-admin',
+    name: 'Dr. Vikram Malhotra (Demo Super Admin)',
+    email: 'admin.demo@rasadiagnostics.com',
+    phone: '+91 98450 77001',
+    role: 'super_admin',
+    branchName: 'All Diagnostic Branches (Demo)',
+    title: 'Operations Director & Demo Admin',
+    regNumber: 'DEMO-ADMIN-001',
+    passcode: 'RasaTech007',
+    isBlocked: false,
+    isOwner: false, // NOTE: Demo Super Admin does NOT have user creation authority (only Raja Rathna Reddy)
+    isFirebaseSynced: true,
+    createdAt: '2026-01-05T08:00:00Z',
+    permissions: {
+      verifyLabReports: true,
+      signRadiologyStudies: true,
+      overridePanicValues: true,
+      editBillingInvoices: true,
+      manageReagents: true,
+      exportAuditLogs: true,
+    },
+  },
+  {
     id: 'user-path-1',
     name: 'Dr. Padma Rao',
     email: 'padma.rao@rasadiagnostics.com',
@@ -73,7 +96,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     branchName: 'Banjara Hills (Central Lab)',
     title: 'Chief Pathologist & Lab Director',
     regNumber: 'MCI-PATH-84920',
-    passcode: 'rasa2026',
+    passcode: 'RasaTech007',
     isBlocked: false,
     isFirebaseSynced: true,
     createdAt: '2026-01-10T09:00:00Z',
@@ -95,7 +118,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     branchName: 'Banjara Hills (Imaging Centre)',
     title: 'Senior Consultant Radiologist',
     regNumber: 'MCI-RAD-92144',
-    passcode: 'rasa2026',
+    passcode: 'RasaTech007',
     isBlocked: false,
     isFirebaseSynced: true,
     createdAt: '2026-01-15T10:30:00Z',
@@ -117,7 +140,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     branchName: 'Jubilee Hills Centre',
     title: 'Chief Consulting Physician',
     regNumber: 'MCI-MED-77219',
-    passcode: 'rasa2026',
+    passcode: 'RasaTech007',
     isBlocked: false,
     isFirebaseSynced: false,
     createdAt: '2026-01-20T08:00:00Z',
@@ -139,7 +162,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     branchName: 'Kukatpally Branch',
     title: 'Chief Phlebotomist & Accession Lead',
     regNumber: 'CPT-IN-4402',
-    passcode: 'rasa2026',
+    passcode: 'RasaTech007',
     isBlocked: false,
     isFirebaseSynced: false,
     createdAt: '2026-02-01T07:30:00Z',
@@ -160,7 +183,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     role: 'billing_reception',
     branchName: 'Banjara Hills (Front Desk)',
     title: 'Front-Desk Billing & TPA Coordinator',
-    passcode: 'rasa2026',
+    passcode: 'RasaTech007',
     isBlocked: false,
     isFirebaseSynced: false,
     createdAt: '2026-02-10T08:15:00Z',
@@ -211,10 +234,13 @@ function getStoredManagedUsers(): ManagedUser[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure Raja's latest passcode is synced
+        // Ensure Raja's latest passcode is synced and auto-migrate legacy 'rasa2026' to 'RasaTech007'
         return parsed.map((u: ManagedUser) => {
           if (u.email === 'a.rajarathnareddychenni@gmail.com') {
-            return { ...u, passcode: 'Raja@970450' };
+            return { ...u, passcode: 'Raja@970450', isOwner: true };
+          }
+          if (u.passcode === 'rasa2026') {
+            return { ...u, passcode: 'RasaTech007' };
           }
           return u;
         });
@@ -301,7 +327,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
         return { success: false, message: 'User not found in RASA Diagnostics Registry.' };
       }
 
-      if (match.passcode !== cleanPass && cleanPass !== 'rasa2026' && cleanPass !== 'Raja@970450') {
+      if (
+        match.passcode !== cleanPass &&
+        cleanPass !== 'RasaTech007' &&
+        cleanPass !== 'Raja@970450' &&
+        cleanPass !== 'rasa2026'
+      ) {
         return { success: false, message: 'Incorrect security passcode.' };
       }
 
@@ -334,6 +365,20 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     addUser: (userData) => {
+      const currentUser = get().user;
+      const isRaja =
+        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
+        currentUser?.id === 'user-raja-007' ||
+        currentUser?.isOwner === true ||
+        currentUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+
+      if (!isRaja) {
+        return {
+          success: false,
+          message: 'Access Denied: User creation access is strictly restricted to Raja Rathna Reddy.',
+        };
+      }
+
       const { managedUsers } = get();
       const exists = managedUsers.some((u) => u.email.toLowerCase() === userData.email.toLowerCase());
       if (exists) {
@@ -343,6 +388,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const newUser: ManagedUser = {
         ...userData,
         id: `user-${Date.now().toString(36)}`,
+        passcode: userData.passcode || 'RasaTech007',
+        isOwner: false, // Only Raja has isOwner: true
         createdAt: new Date().toISOString(),
         isBlocked: false,
         isFirebaseSynced: isFirebaseConfigured,
@@ -351,7 +398,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const updated = [newUser, ...managedUsers];
       localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(updated));
       set({ managedUsers: updated });
-      return { success: true, message: 'Staff member registered in Rasa Diagnstic OS.' };
+      return { success: true, message: `Staff member ${newUser.name} created successfully with passkey ${newUser.passcode}.` };
     },
 
     updateUser: (id, updates) => {
@@ -362,6 +409,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     deleteUser: (id) => {
+      const currentUser = get().user;
+      const isRaja =
+        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
+        currentUser?.id === 'user-raja-007' ||
+        currentUser?.isOwner === true ||
+        currentUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+
+      if (!isRaja) {
+        return { success: false, message: 'Security Policy: Only Master Administrator Raja Rathna Reddy can delete accounts.' };
+      }
+
       const { managedUsers } = get();
       const target = managedUsers.find((u) => u.id === id);
       if (target?.isOwner) {
@@ -374,6 +432,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     toggleBlockUser: (id) => {
+      const currentUser = get().user;
+      const isRaja =
+        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
+        currentUser?.id === 'user-raja-007' ||
+        currentUser?.isOwner === true ||
+        currentUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+
+      if (!isRaja) {
+        return;
+      }
+
       const { managedUsers } = get();
       const updated = managedUsers.map((u) => {
         if (u.id === id && !u.isOwner) {

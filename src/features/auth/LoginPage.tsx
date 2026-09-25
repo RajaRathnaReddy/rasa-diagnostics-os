@@ -177,6 +177,10 @@ export function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <p className="text-[10.5px] text-slate-400 mt-1.5 flex items-center justify-between">
+                <span>Default Initial Passkey: <strong className="text-brand-300 font-mono font-bold">RasaTech007</strong></span>
+                <span className="text-[10px] text-slate-400">Master: <strong className="text-amber-300 font-mono">Raja@970450</strong></span>
+              </p>
             </div>
 
             <button
@@ -195,13 +199,16 @@ export function LoginPage() {
               Instant 1-Click Role Switcher
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {INITIAL_MANAGED_USERS.slice(0, 6).map(u => (
+              {INITIAL_MANAGED_USERS.slice(0, 8).map(u => (
                 <button
                   key={u.id}
                   onClick={() => handleQuickLogin(u)}
                   className="p-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 text-left transition-all cursor-pointer flex flex-col justify-between"
                 >
-                  <p className="text-[11px] font-bold text-white truncate">{u.name}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-white truncate">{u.name}</p>
+                    {u.isOwner && <span className="text-[8.5px] px-1 bg-amber-500/20 text-amber-300 rounded font-mono font-bold">Owner</span>}
+                  </div>
                   <p className="text-[9.5px] text-brand-400 capitalize truncate mt-0.5">{u.role.replace('_', ' ')}</p>
                 </button>
               ))}

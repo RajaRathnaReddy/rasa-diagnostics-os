@@ -32,13 +32,17 @@ export default function UserManagementPage() {
     user: currentLoggedInUser,
   } = useAuthStore();
 
-  // Strictly protected for Raja Rathna Reddy
+  // Master Owner check - Strictly Raja Rathna Reddy
   const isOnlyRaja =
     currentLoggedInUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
     currentLoggedInUser?.id === 'user-raja-007' ||
+    currentLoggedInUser?.isOwner === true ||
     currentLoggedInUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
 
-  if (!isOnlyRaja) {
+  // Demo super admins can view the console, but non-admins are redirected
+  const canAccessSecurityConsole = isOnlyRaja || currentLoggedInUser?.role === 'super_admin';
+
+  if (!canAccessSecurityConsole) {
     return <Navigate to="/" replace />;
   }
 
@@ -65,6 +69,10 @@ export default function UserManagementPage() {
   const handleSaveNewPasscode = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passcodeModalUser) return;
+    if (!isOnlyRaja) {
+      showToast('Restricted: Only Master Admin Raja Rathna Reddy can reassign passcodes.');
+      return;
+    }
     const res = changeUserPasscode(passcodeModalUser.id, newPasscodeValue);
     showToast(res.message);
     if (res.success) {
@@ -73,24 +81,33 @@ export default function UserManagementPage() {
     }
   };
 
-  // Add User Form State
+  // Add User Form State - Default initial Passkey is RasaTech007
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     role: 'pathologist' as UserRole,
     branchName: 'Banjara Hills (Central)',
-    passcode: 'rasa2026',
+    passcode: 'RasaTech007',
     title: 'Senior Specialist',
     regNumber: 'MED-2026-001',
   });
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // STRICT USER CREATION ACCESS CHECK: ONLY RAJA RATHNA REDDY
+    if (!isOnlyRaja) {
+      showToast('Unauthorized: User creation access is strictly reserved for Raja Rathna Reddy.');
+      return;
+    }
+
     if (!formData.name.trim() || !formData.email.trim()) {
       showToast('Name and email are required.');
       return;
     }
+
+    const isSuperAdminRole = formData.role === 'super_admin';
 
     const result = addUser({
       name: formData.name,
@@ -98,16 +115,16 @@ export default function UserManagementPage() {
       phone: formData.phone || '+91 98765 00000',
       role: formData.role,
       branchName: formData.branchName,
-      passcode: formData.passcode || 'rasa2026',
-      title: formData.title,
+      passcode: formData.passcode || 'RasaTech007',
+      title: formData.title || (isSuperAdminRole ? 'Super Administrator (Demo)' : 'Senior Specialist'),
       regNumber: formData.regNumber,
       permissions: {
-        verifyLabReports: formData.role === 'pathologist' || formData.role === 'super_admin',
-        signRadiologyStudies: formData.role === 'radiologist' || formData.role === 'super_admin',
+        verifyLabReports: isSuperAdminRole || formData.role === 'pathologist',
+        signRadiologyStudies: isSuperAdminRole || formData.role === 'radiologist',
         overridePanicValues: true,
-        editBillingInvoices: formData.role === 'billing_reception' || formData.role === 'super_admin',
+        editBillingInvoices: isSuperAdminRole || formData.role === 'billing_reception',
         manageReagents: true,
-        exportAuditLogs: formData.role === 'super_admin',
+        exportAuditLogs: isSuperAdminRole,
       },
     });
 
@@ -120,7 +137,7 @@ export default function UserManagementPage() {
         phone: '',
         role: 'pathologist',
         branchName: 'Banjara Hills (Central)',
-        passcode: 'rasa2026',
+        passcode: 'RasaTech007',
         title: 'Senior Specialist',
         regNumber: 'MED-2026-001',
       });
@@ -152,8 +169,11 @@ export default function UserManagementPage() {
               <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
                 Master Security & Access Control Console
               </h1>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">
-                RAJA RATHNA REDDY ONLY
+              <span className={cn(
+                "text-[10px] px-2 py-0.5 rounded-full font-mono font-bold",
+                isOnlyRaja ? "bg-indigo-500/20 text-indigo-300" : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
+              )}>
+                {isOnlyRaja ? "RAJA RATHNA REDDY (MASTER OWNER)" : "DEMO SUPER ADMIN (VIEW ONLY)"}
               </span>
             </div>
             <p className="text-xs text-indigo-200/80">
@@ -170,15 +190,40 @@ export default function UserManagementPage() {
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Reset Demo Staff</span>
           </button>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Staff User</span>
-          </button>
+          {isOnlyRaja ? (
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Staff User</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => showToast('Restricted: User creation is exclusive to Master Administrator Raja Rathna Reddy.')}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-not-allowed"
+              title="User creation restricted to Raja Rathna Reddy"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Creation Locked (Raja Only)</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {!isOnlyRaja && (
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong>Demo Super Admin Mode:</strong> You can audit staff permissions and inspect clinical roles. <strong>User creation and account provisioning are strictly restricted to Master Administrator Raja Rathna Reddy.</strong>
+            </span>
+          </div>
+          <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold shrink-0">
+            Read Only
+          </span>
+        </div>
+      )}
 
       {toastMessage && (
         <div className="p-3 bg-success-50 border border-success-200 text-success-800 rounded-xl text-xs font-bold flex items-center gap-2">
@@ -252,7 +297,7 @@ export default function UserManagementPage() {
 
                   <td>
                     <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', roleStyle.bg)}>
-                      {roleStyle.label}
+                      {u.role === 'super_admin' ? (u.isOwner ? 'Master Admin' : 'Demo Super Admin') : roleStyle.label}
                     </span>
                     <p className="text-[10px] text-surface-400 mt-0.5">{u.title || 'Staff'}</p>
                   </td>
@@ -269,7 +314,7 @@ export default function UserManagementPage() {
                             [u.id]: !isPasswordRevealed,
                           })
                         }
-                        className="text-surface-400 hover:text-surface-700"
+                        className="text-surface-400 hover:text-surface-700 cursor-pointer"
                       >
                         {isPasswordRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
@@ -303,68 +348,79 @@ export default function UserManagementPage() {
 
                   <td className="text-right">
                     {!u.isOwner ? (
-                      <div className="flex items-center justify-end gap-1">
-                        {/* Send Password Reset Email */}
-                        <button
-                          onClick={() => handleSendResetEmail(u)}
-                          className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
-                          title={`Send Password Reset Link to ${u.email}`}
-                        >
-                          <Mail className="w-4 h-4" />
-                        </button>
+                      isOnlyRaja ? (
+                        <div className="flex items-center justify-end gap-1">
+                          {/* Send Password Reset Email */}
+                          <button
+                            onClick={() => handleSendResetEmail(u)}
+                            className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                            title={`Send Password Reset Link to ${u.email}`}
+                          >
+                            <Mail className="w-4 h-4" />
+                          </button>
 
-                        {/* Reassign Passcode Directly */}
-                        <button
-                          onClick={() => {
-                            setPasscodeModalUser(u);
-                            setNewPasscodeValue('');
-                          }}
-                          className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-                          title="Reassign Passcode Directly"
-                        >
-                          <KeyRound className="w-4 h-4" />
-                        </button>
+                          {/* Reassign Passcode Directly */}
+                          <button
+                            onClick={() => {
+                              setPasscodeModalUser(u);
+                              setNewPasscodeValue('');
+                            }}
+                            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Reassign Passcode Directly"
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </button>
 
-                        {/* Block / Lockout Toggle */}
-                        <button
-                          onClick={() => toggleBlockUser(u.id)}
-                          className={cn(
-                            'p-1.5 rounded-lg transition-colors',
-                            u.isBlocked
-                              ? 'text-emerald-600 hover:bg-emerald-50'
-                              : 'text-amber-600 hover:bg-amber-50'
-                          )}
-                          title={u.isBlocked ? 'Unlock Staff Account' : 'Block / Lockout'}
-                        >
-                          {u.isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                        </button>
+                          {/* Block / Lockout Toggle */}
+                          <button
+                            onClick={() => toggleBlockUser(u.id)}
+                            className={cn(
+                              'p-1.5 rounded-lg transition-colors cursor-pointer',
+                              u.isBlocked
+                                ? 'text-emerald-600 hover:bg-emerald-50'
+                                : 'text-amber-600 hover:bg-amber-50'
+                            )}
+                            title={u.isBlocked ? 'Unlock Staff Account' : 'Block / Lockout'}
+                          >
+                            {u.isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                          </button>
 
-                        {/* Delete User */}
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete staff account for ${u.name}? This action cannot be undone.`)) {
-                              const res = deleteUser(u.id);
-                              if (res.message) showToast(res.message);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                          title="Delete User"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                          {/* Delete User */}
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to delete staff account for ${u.name}? This action cannot be undone.`)) {
+                                const res = deleteUser(u.id);
+                                if (res.message) showToast(res.message);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1 text-[11px] text-surface-400 font-mono">
+                          <span title="Modifications restricted to Master Administrator Raja Rathna Reddy" className="inline-flex items-center gap-1 bg-surface-100 text-surface-500 px-2 py-0.5 rounded text-[10px]">
+                            <Lock className="w-3 h-3 text-amber-500" />
+                            <span>Raja Only</span>
+                          </span>
+                        </div>
+                      )
                     ) : (
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => {
-                            setPasscodeModalUser(u);
-                            setNewPasscodeValue('');
-                          }}
-                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-md transition-colors"
-                          title="Change Master Passcode"
-                        >
-                          Change Passcode
-                        </button>
+                        {isOnlyRaja && (
+                          <button
+                            onClick={() => {
+                              setPasscodeModalUser(u);
+                              setNewPasscodeValue('');
+                            }}
+                            className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-md transition-colors cursor-pointer"
+                            title="Change Master Passcode"
+                          >
+                            Change Passcode
+                          </button>
+                        )}
                         <span className="text-[10px] font-bold text-amber-600 font-mono bg-amber-50 px-2 py-1 rounded-md">Master Owner</span>
                       </div>
                     )}
@@ -432,6 +488,7 @@ export default function UserManagementPage() {
                     onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
                     className="w-full px-3 py-2 border border-surface-200 rounded-lg text-xs"
                   >
+                    <option value="super_admin">Super Administrator (Demo)</option>
                     <option value="pathologist">Chief Pathologist</option>
                     <option value="radiologist">Consultant Radiologist</option>
                     <option value="doctor">Consulting Physician</option>

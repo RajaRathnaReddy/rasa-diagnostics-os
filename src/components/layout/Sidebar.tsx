@@ -28,7 +28,10 @@ export default function Sidebar() {
   const isMasterRaja =
     user?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
     user?.id === 'user-raja-007' ||
+    user?.isOwner === true ||
     user?.name?.toLowerCase().trim() === 'raja rathna reddy';
+
+  const canSeeAccessControl = isMasterRaja || user?.role === 'super_admin';
 
   const navGroups: NavGroup[] = [
     {
@@ -169,10 +172,10 @@ export default function Sidebar() {
               Security
             </div>
           )}
-          {isMasterRaja ? (
+          {canSeeAccessControl ? (
             <NavLink
               to="/admin/users"
-              title={sidebarCollapsed ? 'Access Control (Master Admin)' : undefined}
+              title={sidebarCollapsed ? (isMasterRaja ? 'Access Control (Master Owner)' : 'Access Control (Demo Super Admin)') : undefined}
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors group',
                 location.pathname === '/admin/users'
@@ -185,8 +188,11 @@ export default function Sidebar() {
                 {!sidebarCollapsed && <span className="truncate">Access Control</span>}
               </div>
               {!sidebarCollapsed && (
-                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 font-bold">
-                  Raja
+                <span className={cn(
+                  'text-[9px] px-1.5 py-0.2 rounded-full font-bold',
+                  isMasterRaja ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'
+                )}>
+                  {isMasterRaja ? 'Owner' : 'Demo'}
                 </span>
               )}
             </NavLink>

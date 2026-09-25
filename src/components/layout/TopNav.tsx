@@ -179,7 +179,7 @@ export default function TopNav() {
                   <span className="text-[10px] text-surface-400">/landing</span>
                 </button>
 
-                {isMasterRaja && (
+                {(isMasterRaja || user?.role === 'super_admin') && (
                   <button
                     onClick={() => {
                       navigate('/admin/users');
@@ -189,7 +189,7 @@ export default function TopNav() {
                   >
                     <span className="flex items-center gap-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Security Console (Raja Only)</span>
+                      <span>Security & User Console {isMasterRaja ? '(Master)' : '(Demo Admin)'}</span>
                     </span>
                     <span className="text-[10px] text-indigo-400">/admin/users</span>
                   </button>
