@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
 import CommandPalette from './CommandPalette';
@@ -11,12 +11,19 @@ import { ClinicalReportModal } from '../ui/ClinicalReportModal';
 import { ReportGeneratorModal } from '../ui/ReportGeneratorModal';
 import { MobileBottomNav } from './MobileBottomNav';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function AppLayout() {
+  const { isAuthenticated } = useAuthStore();
+  const location = useLocation();
   const {
     sidebarCollapsed, dicomViewerOpen, closeDicomViewer, selectedDicomStudy,
     reportModal, closeReportModal, reportGeneratorOpen, setReportGeneratorOpen
   } = useAppStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-surface-50 font-sans pb-16 md:pb-0">

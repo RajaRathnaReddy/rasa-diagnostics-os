@@ -24,6 +24,12 @@ export function LoginPage() {
   const [resetStatus, setResetStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -37,7 +43,7 @@ export function LoginPage() {
     try {
       const result = await validateAndLogin(username, password);
       if (result.success) {
-        navigate('/');
+        navigate('/dashboard', { replace: true });
       } else {
         setErrorMessage(result.message || 'Access Denied: Invalid credentials.');
         setIsSubmitting(false);
@@ -90,7 +96,7 @@ export function LoginPage() {
           </div>
 
           <button
-            onClick={() => navigate('/landing')}
+            onClick={() => navigate('/')}
             className="text-xs font-bold text-slate-300 hover:text-white bg-slate-900/90 hover:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <ExternalLink className="w-3.5 h-3.5 text-brand-400" />

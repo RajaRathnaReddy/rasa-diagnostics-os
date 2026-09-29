@@ -179,13 +179,13 @@ export function LandingPage() {
               onClick={() => navigate('/login')}
               className="text-xs font-bold text-slate-300 hover:text-white px-4 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-900 transition-all cursor-pointer"
             >
-              Sign In / Switch Role
+              Sign In to Account
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(isAuthenticated ? '/dashboard' : '/login')}
               className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-lg shadow-brand-600/20 flex items-center gap-2 transition-all cursor-pointer"
             >
-              <span>Launch Diagnostics OS</span>
+              <span>{isAuthenticated ? 'Open Dashboard' : 'Launch Diagnostics OS'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -214,10 +214,10 @@ export function LandingPage() {
         {/* Primary CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(isAuthenticated ? '/dashboard' : '/login')}
             className="w-full sm:w-auto px-8 py-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm shadow-xl shadow-brand-600/30 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
           >
-            <span>Launch Live Workspace</span>
+            <span>{isAuthenticated ? 'Enter Diagnostic Workspace' : 'Launch Diagnostics Console'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
           <button
@@ -225,7 +225,7 @@ export function LandingPage() {
             className="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-bold text-sm border border-slate-700/80 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
           >
             <UserCheck className="w-4 h-4 text-brand-400" />
-            <span>Staff Login (Raja Rathna Reddy)</span>
+            <span>Staff & Doctor Portal Login</span>
           </button>
         </div>
 
@@ -325,12 +325,16 @@ export function LandingPage() {
             <div className="pt-4 flex items-center gap-4">
               <button
                 onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate('/login');
+                    return;
+                  }
                   if (selectedStation.id === 'pacs') navigate('/radiology');
                   else if (selectedStation.id === 'reception') navigate('/reception');
                   else if (selectedStation.id === 'lis') navigate('/laboratory');
                   else if (selectedStation.id === 'pathology') navigate('/pathology');
                   else if (selectedStation.id === 'ai_sentinel') navigate('/ai-assistant');
-                  else navigate('/');
+                  else navigate('/dashboard');
                 }}
                 className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
               >
@@ -366,7 +370,7 @@ export function LandingPage() {
           RASA DIAGNOSTICS OS · Engineered for Enterprise Diagnostic Centers & Hospital Labs
         </p>
         <p className="text-[11px]">
-          Designed and configured by Master Administrator <strong className="text-slate-300">Raja Rathna Reddy</strong>. All rights reserved © 2026.
+          Enterprise Diagnostic Operating System · Secured Healthcare Network. All rights reserved © 2026.
         </p>
       </footer>
     </div>

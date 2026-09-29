@@ -53,13 +53,14 @@ export default function App() {
   return (
     <Routes>
       {/* Public SaaS & Presentation Routes */}
+      <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
       <Route path="/landing" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
       <Route path="/overview" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
       <Route path="/login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
 
       {/* Main Diagnostic Center Protected Workspace */}
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
+        <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
         <Route path="/reception" element={<Suspense fallback={<PageLoader />}><ReceptionPage /></Suspense>} />
         <Route path="/consultations" element={<Suspense fallback={<PageLoader />}><ConsultationsPage /></Suspense>} />
         <Route path="/patients" element={<Suspense fallback={<PageLoader />}><PatientsPage /></Suspense>} />

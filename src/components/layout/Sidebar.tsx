@@ -25,19 +25,19 @@ export default function Sidebar() {
   const { user } = useAuthStore();
   const location = useLocation();
 
-  const isMasterRaja =
-    user?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
-    user?.id === 'user-raja-007' ||
+  const isMasterAdmin =
     user?.isOwner === true ||
-    user?.name?.toLowerCase().trim() === 'raja rathna reddy';
+    user?.id === 'user-director-001' ||
+    user?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
+    user?.id === 'user-raja-007';
 
-  const canSeeAccessControl = isMasterRaja || user?.role === 'super_admin';
+  const canSeeAccessControl = isMasterAdmin || user?.role === 'super_admin';
 
   const navGroups: NavGroup[] = [
     {
       groupName: 'Operations',
       items: [
-        { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/appointments', label: 'Appointments', icon: CalendarDays },
         { path: '/registration', label: 'Registration', icon: ClipboardList },
         { path: '/patients', label: 'Patients', icon: Users },
@@ -123,8 +123,8 @@ export default function Sidebar() {
             {group.items.map((item) => {
               const Icon = item.icon;
               const isActive =
-                item.path === '/'
-                  ? location.pathname === '/'
+                item.path === '/dashboard'
+                  ? location.pathname === '/dashboard'
                   : location.pathname.startsWith(item.path);
 
               return (
@@ -175,7 +175,7 @@ export default function Sidebar() {
           {canSeeAccessControl ? (
             <NavLink
               to="/admin/users"
-              title={sidebarCollapsed ? (isMasterRaja ? 'Access Control (Master Owner)' : 'Access Control (Demo Super Admin)') : undefined}
+              title={sidebarCollapsed ? (isMasterAdmin ? 'Access Control (Master Director)' : 'Access Control (Demo Super Admin)') : undefined}
               className={cn(
                 'flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors group',
                 location.pathname === '/admin/users'
@@ -190,9 +190,9 @@ export default function Sidebar() {
               {!sidebarCollapsed && (
                 <span className={cn(
                   'text-[9px] px-1.5 py-0.2 rounded-full font-bold',
-                  isMasterRaja ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'
+                  isMasterAdmin ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'
                 )}>
-                  {isMasterRaja ? 'Owner' : 'Demo'}
+                  {isMasterAdmin ? 'Director' : 'Demo'}
                 </span>
               )}
             </NavLink>
@@ -209,7 +209,7 @@ export default function Sidebar() {
 
           {/* Public SaaS Landing Link */}
           <NavLink
-            to="/landing"
+            to="/"
             title={sidebarCollapsed ? 'Product Landing' : undefined}
             className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium text-surface-500 hover:bg-surface-50 hover:text-surface-800 transition-colors"
           >

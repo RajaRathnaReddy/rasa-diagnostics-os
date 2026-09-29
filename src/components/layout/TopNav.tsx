@@ -45,10 +45,11 @@ export default function TopNav() {
     return () => document.removeEventListener('keydown', handler);
   }, [commandPaletteOpen, setCommandPaletteOpen]);
 
-  const isMasterRaja =
-    user?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
-    user?.id === 'user-raja-007' ||
-    user?.name?.toLowerCase().trim() === 'raja rathna reddy';
+  const isMasterAdmin =
+    user?.isOwner === true ||
+    user?.id === 'user-director-001' ||
+    user?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
+    user?.id === 'user-raja-007';
 
   return (
     <header
@@ -138,15 +139,15 @@ export default function TopNav() {
             className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-50 transition-colors cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 font-bold text-xs">
-              {user?.name ? user.name.charAt(0) : 'R'}
+              {user?.name ? user.name.charAt(0) : 'D'}
             </div>
             <div className="hidden lg:block text-left">
-              <div className="text-[13px] font-bold text-surface-900 truncate max-w-[140px] flex items-center gap-1">
-                <span>{user?.name || 'Raja Rathna Reddy'}</span>
-                {isMasterRaja && <Crown className="w-3 h-3 text-amber-500 shrink-0" />}
+              <div className="text-[13px] font-bold text-surface-900 truncate max-w-[150px] flex items-center gap-1">
+                <span>{user?.name || 'Chief Medical Director'}</span>
+                {isMasterAdmin && <Crown className="w-3 h-3 text-amber-500 shrink-0" />}
               </div>
               <div className="text-[10.5px] text-surface-500 capitalize">
-                {user?.role ? user.role.replace('_', ' ') : 'Master Admin'}
+                {user?.role ? user.role.replace('_', ' ') : 'Director'}
               </div>
             </div>
             <ChevronDown className="w-3 h-3 text-surface-400" />
@@ -156,10 +157,10 @@ export default function TopNav() {
           {userDropdownOpen && (
             <div className="absolute right-0 top-full mt-1 w-72 bg-surface-0 border border-surface-200 rounded-2xl shadow-elevated py-2 z-50 fade-in text-xs font-sans">
               <div className="px-4 py-2 border-b border-surface-100">
-                <p className="font-bold text-surface-900 text-[13px]">{user?.name || 'Raja Rathna Reddy'}</p>
-                <p className="text-[11px] text-surface-500 truncate">{user?.email || 'a.rajarathnareddychenni@gmail.com'}</p>
+                <p className="font-bold text-surface-900 text-[13px]">{user?.name || 'Chief Medical Director'}</p>
+                <p className="text-[11px] text-surface-500 truncate">{user?.email || 'director@rasadiagnostics.com'}</p>
                 <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 capitalize">
-                  {user?.role ? user.role.replace('_', ' ') : 'Master Admin'}
+                  {user?.title || (user?.role ? user.role.replace('_', ' ') : 'Director')}
                 </span>
               </div>
 
@@ -167,7 +168,7 @@ export default function TopNav() {
               <div className="py-1 border-b border-surface-100">
                 <button
                   onClick={() => {
-                    navigate('/landing');
+                    navigate('/');
                     setUserDropdownOpen(false);
                   }}
                   className="w-full text-left px-4 py-2 hover:bg-surface-50 flex items-center justify-between text-surface-700 cursor-pointer"
@@ -176,10 +177,10 @@ export default function TopNav() {
                     <ExternalLink className="w-3.5 h-3.5 text-brand-600" />
                     <span>Product Landing Page</span>
                   </span>
-                  <span className="text-[10px] text-surface-400">/landing</span>
+                  <span className="text-[10px] text-surface-400">/</span>
                 </button>
 
-                {(isMasterRaja || user?.role === 'super_admin') && (
+                {(isMasterAdmin || user?.role === 'super_admin') && (
                   <button
                     onClick={() => {
                       navigate('/admin/users');
@@ -189,7 +190,7 @@ export default function TopNav() {
                   >
                     <span className="flex items-center gap-2">
                       <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Security & User Console {isMasterRaja ? '(Master)' : '(Demo Admin)'}</span>
+                      <span>Security & User Console {isMasterAdmin ? '(Director)' : '(Admin)'}</span>
                     </span>
                     <span className="text-[10px] text-indigo-400">/admin/users</span>
                   </button>

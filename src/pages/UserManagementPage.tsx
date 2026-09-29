@@ -32,18 +32,20 @@ export default function UserManagementPage() {
     user: currentLoggedInUser,
   } = useAuthStore();
 
-  // Master Owner check - Strictly Raja Rathna Reddy
-  const isOnlyRaja =
-    currentLoggedInUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
-    currentLoggedInUser?.id === 'user-raja-007' ||
+  // Master Director check - Chief Medical Director
+  const isMasterAdmin =
     currentLoggedInUser?.isOwner === true ||
-    currentLoggedInUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+    currentLoggedInUser?.id === 'user-director-001' ||
+    currentLoggedInUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
+    currentLoggedInUser?.name?.toLowerCase().trim() === 'chief medical director' ||
+    currentLoggedInUser?.id === 'user-raja-007' ||
+    currentLoggedInUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
 
   // Demo super admins can view the console, but non-admins are redirected
-  const canAccessSecurityConsole = isOnlyRaja || currentLoggedInUser?.role === 'super_admin';
+  const canAccessSecurityConsole = isMasterAdmin || currentLoggedInUser?.role === 'super_admin';
 
   if (!canAccessSecurityConsole) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,8 +71,8 @@ export default function UserManagementPage() {
   const handleSaveNewPasscode = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passcodeModalUser) return;
-    if (!isOnlyRaja) {
-      showToast('Restricted: Only Master Admin Raja Rathna Reddy can reassign passcodes.');
+    if (!isMasterAdmin) {
+      showToast('Restricted: Only Chief Medical Director can reassign passcodes.');
       return;
     }
     const res = changeUserPasscode(passcodeModalUser.id, newPasscodeValue);
@@ -96,9 +98,9 @@ export default function UserManagementPage() {
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // STRICT USER CREATION ACCESS CHECK: ONLY RAJA RATHNA REDDY
-    if (!isOnlyRaja) {
-      showToast('Unauthorized: User creation access is strictly reserved for Raja Rathna Reddy.');
+    // STRICT USER CREATION ACCESS CHECK: CHIEF MEDICAL DIRECTOR
+    if (!isMasterAdmin) {
+      showToast('Unauthorized: User creation access is strictly reserved for Chief Medical Director.');
       return;
     }
 
@@ -171,9 +173,9 @@ export default function UserManagementPage() {
               </h1>
               <span className={cn(
                 "text-[10px] px-2 py-0.5 rounded-full font-mono font-bold",
-                isOnlyRaja ? "bg-indigo-500/20 text-indigo-300" : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
+                isMasterAdmin ? "bg-indigo-500/20 text-indigo-300" : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
               )}>
-                {isOnlyRaja ? "RAJA RATHNA REDDY (MASTER OWNER)" : "DEMO SUPER ADMIN (VIEW ONLY)"}
+                {isMasterAdmin ? "CHIEF MEDICAL DIRECTOR (MASTER CONSOLE)" : "DEMO SUPER ADMIN (VIEW ONLY)"}
               </span>
             </div>
             <p className="text-xs text-indigo-200/80">
@@ -190,7 +192,7 @@ export default function UserManagementPage() {
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Reset Demo Staff</span>
           </button>
-          {isOnlyRaja ? (
+          {isMasterAdmin ? (
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
@@ -200,23 +202,23 @@ export default function UserManagementPage() {
             </button>
           ) : (
             <button
-              onClick={() => showToast('Restricted: User creation is exclusive to Master Administrator Raja Rathna Reddy.')}
+              onClick={() => showToast('Restricted: User creation is exclusive to Chief Medical Director.')}
               className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-not-allowed"
-              title="User creation restricted to Raja Rathna Reddy"
+              title="User creation restricted to Chief Medical Director"
             >
               <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span>Creation Locked (Raja Only)</span>
+              <span>Creation Locked (Director Only)</span>
             </button>
           )}
         </div>
       </div>
 
-      {!isOnlyRaja && (
+      {!isMasterAdmin && (
         <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
-              <strong>Demo Super Admin Mode:</strong> You can audit staff permissions and inspect clinical roles. <strong>User creation and account provisioning are strictly restricted to Master Administrator Raja Rathna Reddy.</strong>
+              <strong>Demo Super Admin Mode:</strong> You can audit staff permissions and inspect clinical roles. <strong>User creation and account provisioning are strictly restricted to the Chief Medical Director.</strong>
             </span>
           </div>
           <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold shrink-0">
@@ -348,7 +350,7 @@ export default function UserManagementPage() {
 
                   <td className="text-right">
                     {!u.isOwner ? (
-                      isOnlyRaja ? (
+                      isMasterAdmin ? (
                         <div className="flex items-center justify-end gap-1">
                           {/* Send Password Reset Email */}
                           <button
@@ -401,15 +403,15 @@ export default function UserManagementPage() {
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-1 text-[11px] text-surface-400 font-mono">
-                          <span title="Modifications restricted to Master Administrator Raja Rathna Reddy" className="inline-flex items-center gap-1 bg-surface-100 text-surface-500 px-2 py-0.5 rounded text-[10px]">
+                          <span title="Modifications restricted to Chief Medical Director" className="inline-flex items-center gap-1 bg-surface-100 text-surface-500 px-2 py-0.5 rounded text-[10px]">
                             <Lock className="w-3 h-3 text-amber-500" />
-                            <span>Raja Only</span>
+                            <span>Director Only</span>
                           </span>
                         </div>
                       )
                     ) : (
                       <div className="flex items-center justify-end gap-1.5">
-                        {isOnlyRaja && (
+                        {isMasterAdmin && (
                           <button
                             onClick={() => {
                               setPasscodeModalUser(u);
@@ -421,7 +423,7 @@ export default function UserManagementPage() {
                             Change Passcode
                           </button>
                         )}
-                        <span className="text-[10px] font-bold text-amber-600 font-mono bg-amber-50 px-2 py-1 rounded-md">Master Owner</span>
+                        <span className="text-[10px] font-bold text-amber-600 font-mono bg-amber-50 px-2 py-1 rounded-md">Master Director</span>
                       </div>
                     )}
                   </td>

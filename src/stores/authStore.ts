@@ -42,15 +42,15 @@ export interface ManagedUser extends User {
 
 export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   {
-    id: 'user-raja-007',
-    name: 'Raja Rathna Reddy',
-    email: 'a.rajarathnareddychenni@gmail.com',
+    id: 'user-director-001',
+    name: 'Chief Medical Director',
+    email: 'director@rasadiagnostics.com',
     phone: '+91 98450 00001',
     role: 'super_admin',
-    branchName: 'All Diagnostic Branches (HQ)',
-    title: 'Managing Director & Enterprise Admin',
+    branchName: 'All Diagnostic Branches (Central HQ)',
+    title: 'Executive Director & Chief of Pathology',
     regNumber: 'MED-MGMT-001',
-    passcode: 'Raja@970450',
+    passcode: 'RasaTech007',
     isBlocked: false,
     isOwner: true,
     isFirebaseSynced: true,
@@ -75,7 +75,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     regNumber: 'DEMO-ADMIN-001',
     passcode: 'RasaTech007',
     isBlocked: false,
-    isOwner: false, // NOTE: Demo Super Admin does NOT have user creation authority (only Raja Rathna Reddy)
+    isOwner: false, // NOTE: Demo Super Admin does NOT have user creation authority (only Chief Medical Director)
     isFirebaseSynced: true,
     createdAt: '2026-01-05T08:00:00Z',
     permissions: {
@@ -222,9 +222,28 @@ const STORAGE_KEY_USERS = 'rasa_diagnostics_managed_users';
 function getStoredUser(): User | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_AUTH);
-    return raw ? JSON.parse(raw) : INITIAL_MANAGED_USERS[0];
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      parsed?.email === 'a.rajarathnareddychenni@gmail.com' ||
+      parsed?.id === 'user-raja-007' ||
+      parsed?.name === 'Raja Rathna Reddy'
+    ) {
+      const migrated: User = {
+        ...parsed,
+        id: 'user-director-001',
+        name: 'Chief Medical Director',
+        email: 'director@rasadiagnostics.com',
+        title: 'Executive Director & Chief of Pathology',
+        branchName: 'All Diagnostic Branches (Central HQ)',
+        isOwner: true,
+      };
+      localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(migrated));
+      return migrated;
+    }
+    return parsed;
   } catch {
-    return INITIAL_MANAGED_USERS[0];
+    return null;
   }
 }
 
@@ -234,10 +253,22 @@ function getStoredManagedUsers(): ManagedUser[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure Raja's latest passcode is synced and auto-migrate legacy 'rasa2026' to 'RasaTech007'
         return parsed.map((u: ManagedUser) => {
-          if (u.email === 'a.rajarathnareddychenni@gmail.com') {
-            return { ...u, passcode: 'Raja@970450', isOwner: true };
+          if (
+            u.email === 'a.rajarathnareddychenni@gmail.com' ||
+            u.id === 'user-raja-007' ||
+            u.name === 'Raja Rathna Reddy'
+          ) {
+            return {
+              ...u,
+              id: 'user-director-001',
+              name: 'Chief Medical Director',
+              email: 'director@rasadiagnostics.com',
+              title: 'Executive Director & Chief of Pathology',
+              branchName: 'All Diagnostic Branches (Central HQ)',
+              passcode: u.passcode || 'RasaTech007',
+              isOwner: true,
+            };
           }
           if (u.passcode === 'rasa2026') {
             return { ...u, passcode: 'RasaTech007' };
@@ -273,17 +304,24 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const cleanId = identifier.trim().toLowerCase();
       const cleanPass = passcode.trim();
 
-      const isRajaAlias =
+      const isDirectorAlias =
+        cleanId === 'director' ||
+        cleanId === 'cmo' ||
+        cleanId === 'master' ||
+        cleanId === 'admin' ||
+        cleanId === 'superadmin' ||
+        cleanId === 'user-director-001' ||
+        cleanId === 'director@rasadiagnostics.com' ||
+        cleanId.replace(/\s+/g, '') === 'chiefmedicaldirector' ||
+        // Silent backward compatibility aliases
         cleanId === 'raja' ||
         cleanId === 'rajarathna' ||
-        cleanId === 'admin' ||
         cleanId === 'user-raja-007' ||
-        cleanId === 'a.rajarathnareddychenni@gmail.com' ||
-        cleanId.replace(/\s+/g, '') === 'rajarathnareddy';
+        cleanId === 'a.rajarathnareddychenni@gmail.com';
 
       // 1. Check if user is blocked
-      const match = isRajaAlias
-        ? managedUsers.find((u) => u.email === 'a.rajarathnareddychenni@gmail.com') || managedUsers[0]
+      const match = isDirectorAlias
+        ? managedUsers.find((u) => u.id === 'user-director-001' || u.isOwner) || managedUsers[0]
         : managedUsers.find(
             (u) =>
               u.email.toLowerCase() === cleanId ||
@@ -292,7 +330,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           );
 
       if (match && match.isBlocked) {
-        return { success: false, message: 'Account is blocked. Contact Administrator Raja Rathna Reddy.' };
+        return { success: false, message: 'Account is blocked. Contact Chief Medical Director.' };
       }
 
       // 2. Attempt Firebase Authentication if active and identifier is an email
@@ -300,17 +338,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
         try {
           const userCredential = await signInWithEmailAndPassword(auth, cleanId, cleanPass);
           const fbUser = userCredential.user;
-          const isRaja = cleanId === 'a.rajarathnareddychenni@gmail.com';
+          const isDirector = cleanId === 'director@rasadiagnostics.com' || cleanId === 'a.rajarathnareddychenni@gmail.com';
 
           const authenticatedUser: User = {
             id: fbUser.uid,
-            name: isRaja ? 'Raja Rathna Reddy' : fbUser.displayName || match?.name || fbUser.email?.split('@')[0] || 'Diagnostic Staff',
-            email: fbUser.email || cleanId,
+            name: isDirector ? 'Chief Medical Director' : fbUser.displayName || match?.name || fbUser.email?.split('@')[0] || 'Diagnostic Staff',
+            email: isDirector ? 'director@rasadiagnostics.com' : (fbUser.email || cleanId),
             phone: match?.phone || '+91 98450 00001',
-            role: match?.role || (isRaja ? 'super_admin' : 'pathologist'),
-            branchName: match?.branchName || 'Banjara Hills (Central)',
-            title: match?.title || (isRaja ? 'Managing Director' : 'Specialist'),
-            isOwner: isRaja,
+            role: match?.role || (isDirector ? 'super_admin' : 'pathologist'),
+            branchName: match?.branchName || 'All Diagnostic Branches (Central HQ)',
+            title: match?.title || (isDirector ? 'Executive Director & Chief of Pathology' : 'Specialist'),
+            isOwner: isDirector,
             isFirebaseSynced: true,
           };
 
@@ -366,16 +404,18 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     addUser: (userData) => {
       const currentUser = get().user;
-      const isRaja =
-        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
-        currentUser?.id === 'user-raja-007' ||
+      const isDirector =
         currentUser?.isOwner === true ||
-        currentUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+        currentUser?.id === 'user-director-001' ||
+        currentUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
+        currentUser?.name?.toLowerCase().trim() === 'chief medical director' ||
+        currentUser?.id === 'user-raja-007' ||
+        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
 
-      if (!isRaja) {
+      if (!isDirector) {
         return {
           success: false,
-          message: 'Access Denied: User creation access is strictly restricted to Raja Rathna Reddy.',
+          message: 'Access Denied: User creation access is strictly restricted to the Chief Medical Director.',
         };
       }
 
@@ -389,7 +429,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         ...userData,
         id: `user-${Date.now().toString(36)}`,
         passcode: userData.passcode || 'RasaTech007',
-        isOwner: false, // Only Raja has isOwner: true
+        isOwner: false, // Only Chief Medical Director has isOwner: true
         createdAt: new Date().toISOString(),
         isBlocked: false,
         isFirebaseSynced: isFirebaseConfigured,
@@ -410,14 +450,16 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     deleteUser: (id) => {
       const currentUser = get().user;
-      const isRaja =
-        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
-        currentUser?.id === 'user-raja-007' ||
+      const isDirector =
         currentUser?.isOwner === true ||
-        currentUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+        currentUser?.id === 'user-director-001' ||
+        currentUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
+        currentUser?.name?.toLowerCase().trim() === 'chief medical director' ||
+        currentUser?.id === 'user-raja-007' ||
+        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
 
-      if (!isRaja) {
-        return { success: false, message: 'Security Policy: Only Master Administrator Raja Rathna Reddy can delete accounts.' };
+      if (!isDirector) {
+        return { success: false, message: 'Security Policy: Only Chief Medical Director can delete accounts.' };
       }
 
       const { managedUsers } = get();
@@ -433,13 +475,15 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     toggleBlockUser: (id) => {
       const currentUser = get().user;
-      const isRaja =
-        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com' ||
-        currentUser?.id === 'user-raja-007' ||
+      const isDirector =
         currentUser?.isOwner === true ||
-        currentUser?.name?.toLowerCase().trim() === 'raja rathna reddy';
+        currentUser?.id === 'user-director-001' ||
+        currentUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
+        currentUser?.name?.toLowerCase().trim() === 'chief medical director' ||
+        currentUser?.id === 'user-raja-007' ||
+        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
 
-      if (!isRaja) {
+      if (!isDirector) {
         return;
       }
 
@@ -479,7 +523,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       if (exists) {
         return {
           success: true,
-          message: `Password reset instructions and verification code sent to ${cleanEmail}. Alternatively, Master Admin Raja Rathna Reddy can reassign your security passcode in User Management.`,
+          message: `Password reset instructions and verification code sent to ${cleanEmail}. Alternatively, Chief Medical Director can reassign your security passcode in User Management.`,
         };
       }
 
