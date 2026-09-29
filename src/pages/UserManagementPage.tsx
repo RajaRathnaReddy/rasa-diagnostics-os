@@ -37,9 +37,7 @@ export default function UserManagementPage() {
     currentLoggedInUser?.isOwner === true ||
     currentLoggedInUser?.id === 'user-director-001' ||
     currentLoggedInUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
-    currentLoggedInUser?.name?.toLowerCase().trim() === 'chief medical director' ||
-    currentLoggedInUser?.id === 'user-raja-007' ||
-    currentLoggedInUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
+    currentLoggedInUser?.name?.toLowerCase().trim() === 'chief medical director';
 
   // Demo super admins can view the console, but non-admins are redirected
   const canAccessSecurityConsole = isMasterAdmin || currentLoggedInUser?.role === 'super_admin';

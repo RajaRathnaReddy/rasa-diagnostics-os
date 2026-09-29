@@ -28,8 +28,7 @@ export default function Sidebar() {
   const isMasterAdmin =
     user?.isOwner === true ||
     user?.id === 'user-director-001' ||
-    user?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
-    user?.id === 'user-raja-007';
+    user?.email?.toLowerCase() === 'director@rasadiagnostics.com';
 
   const canSeeAccessControl = isMasterAdmin || user?.role === 'super_admin';
 

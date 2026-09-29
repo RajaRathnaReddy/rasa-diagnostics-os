@@ -224,11 +224,7 @@ function getStoredUser(): User | null {
     const raw = localStorage.getItem(STORAGE_KEY_AUTH);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (
-      parsed?.email === 'a.rajarathnareddychenni@gmail.com' ||
-      parsed?.id === 'user-raja-007' ||
-      parsed?.name === 'Raja Rathna Reddy'
-    ) {
+    if (parsed?.isOwner && parsed?.name !== 'Chief Medical Director') {
       const migrated: User = {
         ...parsed,
         id: 'user-director-001',
@@ -254,11 +250,7 @@ function getStoredManagedUsers(): ManagedUser[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.map((u: ManagedUser) => {
-          if (
-            u.email === 'a.rajarathnareddychenni@gmail.com' ||
-            u.id === 'user-raja-007' ||
-            u.name === 'Raja Rathna Reddy'
-          ) {
+          if (u.isOwner && u.name !== 'Chief Medical Director') {
             return {
               ...u,
               id: 'user-director-001',
@@ -312,12 +304,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         cleanId === 'superadmin' ||
         cleanId === 'user-director-001' ||
         cleanId === 'director@rasadiagnostics.com' ||
-        cleanId.replace(/\s+/g, '') === 'chiefmedicaldirector' ||
-        // Silent backward compatibility aliases
-        cleanId === 'raja' ||
-        cleanId === 'rajarathna' ||
-        cleanId === 'user-raja-007' ||
-        cleanId === 'a.rajarathnareddychenni@gmail.com';
+        cleanId.replace(/\s+/g, '') === 'chiefmedicaldirector';
 
       // 1. Check if user is blocked
       const match = isDirectorAlias
@@ -338,7 +325,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         try {
           const userCredential = await signInWithEmailAndPassword(auth, cleanId, cleanPass);
           const fbUser = userCredential.user;
-          const isDirector = cleanId === 'director@rasadiagnostics.com' || cleanId === 'a.rajarathnareddychenni@gmail.com';
+          const isDirector = cleanId === 'director@rasadiagnostics.com' || match?.isOwner;
 
           const authenticatedUser: User = {
             id: fbUser.uid,
@@ -368,7 +355,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
       if (
         match.passcode !== cleanPass &&
         cleanPass !== 'RasaTech007' &&
-        cleanPass !== 'Raja@970450' &&
         cleanPass !== 'rasa2026'
       ) {
         return { success: false, message: 'Incorrect security passcode.' };
@@ -408,9 +394,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         currentUser?.isOwner === true ||
         currentUser?.id === 'user-director-001' ||
         currentUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
-        currentUser?.name?.toLowerCase().trim() === 'chief medical director' ||
-        currentUser?.id === 'user-raja-007' ||
-        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
+        currentUser?.name?.toLowerCase().trim() === 'chief medical director';
 
       if (!isDirector) {
         return {
@@ -454,9 +438,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         currentUser?.isOwner === true ||
         currentUser?.id === 'user-director-001' ||
         currentUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
-        currentUser?.name?.toLowerCase().trim() === 'chief medical director' ||
-        currentUser?.id === 'user-raja-007' ||
-        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
+        currentUser?.name?.toLowerCase().trim() === 'chief medical director';
 
       if (!isDirector) {
         return { success: false, message: 'Security Policy: Only Chief Medical Director can delete accounts.' };
@@ -479,9 +461,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         currentUser?.isOwner === true ||
         currentUser?.id === 'user-director-001' ||
         currentUser?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
-        currentUser?.name?.toLowerCase().trim() === 'chief medical director' ||
-        currentUser?.id === 'user-raja-007' ||
-        currentUser?.email?.toLowerCase() === 'a.rajarathnareddychenni@gmail.com';
+        currentUser?.name?.toLowerCase().trim() === 'chief medical director';
 
       if (!isDirector) {
         return;

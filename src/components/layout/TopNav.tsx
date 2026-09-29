@@ -48,8 +48,7 @@ export default function TopNav() {
   const isMasterAdmin =
     user?.isOwner === true ||
     user?.id === 'user-director-001' ||
-    user?.email?.toLowerCase() === 'director@rasadiagnostics.com' ||
-    user?.id === 'user-raja-007';
+    user?.email?.toLowerCase() === 'director@rasadiagnostics.com';
 
   return (
     <header
